@@ -29,6 +29,7 @@ JOB_TYPE_LABELS = {
 TEMPLATE_FILE = Path(__file__).with_name("interface_modele.html")
 CV_SCRIPT_FILE = Path(__file__).with_name("interface_cv.js")
 STATS_SCRIPT_FILE = Path(__file__).with_name("interface_stats.js")
+SUIVI_SCRIPT_FILE = Path(__file__).with_name("interface_suivi.js")
 
 
 def browser_rules() -> dict[str, object]:
@@ -142,6 +143,7 @@ def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, c
         .replace("{{REGLES}}", _json_for_html(browser_rules()))
         .replace("{{SCRIPT_CV}}", _script(CV_SCRIPT_FILE))
         .replace("{{SCRIPT_STATS}}", _script(STATS_SCRIPT_FILE))
+        .replace("{{SCRIPT_SUIVI}}", _script(SUIVI_SCRIPT_FILE))
         .replace("{{HISTORIQUE}}", _json_for_html(history or []))
         .replace("{{DONNEES}}", _json_for_html(rows))
     )

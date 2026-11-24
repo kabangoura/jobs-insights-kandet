@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 216 tests`. Cinq tests comparent la page avec Python à l'aide de Node.js : le CV, la lettre et les statistiques. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 223 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -64,7 +64,7 @@ python main.py --depuis offres.json    # recrée seulement la page, sans nouvell
 
 Dans la page :
 
-- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées, description complète seulement.
+- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées, description complète seulement, mes offres suivies seulement.
 - **Tri** : plus récentes, salaire le plus élevé, expire bientôt, titre.
 - **Technologies demandées** : un clic sur une technologie filtre les offres.
 - **Chaque offre** affiche le titre de l'employeur, le salaire, le niveau, les badges (« Stage », « Expire dans 3 j »…), un résumé, les technologies et « Plus de détails » (études, expérience, langues). Elle donne aussi le lien vers l'offre et vers l'annonce d'origine.
@@ -73,6 +73,7 @@ Dans la page :
 - **« Exporter en CSV »** enregistre les offres affichées pour Excel (une ligne par annonce, avec une colonne `description_complete`).
 - **« Copier le lien de cette recherche »** garde les filtres dans l'adresse de la page. Par exemple, `offres.html#region=Estrie&techno=SQL` rouvre la page avec ces filtres.
 - **Onglet « Statistiques »** (à côté de « Liste des offres ») : des graphiques calculés sur les offres affichées, donc ils suivent les filtres. On y trouve les salaires médians (annuel et horaire, jamais mélangés), les stages, les offres par région, les technologies, le niveau, le salaire selon le niveau, les professions et le nombre d'offres à chaque jour de collecte. Un clic sur une région, une technologie ou un niveau applique le filtre. `offres.html#vue=stats` ouvre directement cet onglet.
+- **Suivi de mes candidatures** : « ☆ Suivre cette offre » sur une carte, puis un statut (À postuler, Postulé, Entrevue, Offre reçue, Refusé, Abandonné). L'onglet « Mes candidatures » liste les offres suivies avec une note (contact, date d'entrevue…), et le bouton « Exporter mon suivi (CSV) » les enregistre pour Excel. Le suivi reste dans le navigateur de l'ordinateur (`localStorage`) : rien n'est envoyé. Il est gardé quand `main.py` recrée la page. Une offre qui disparaît d'une collecte reste dans le suivi, avec la mention « N'est plus dans la dernière collecte ».
 - La page s'adapte au téléphone (filtres repliables) et au mode sombre.
 - **« Comparer les offres avec mon CV »** (en haut des résultats) :
   - choisir un CV en `.docx` ou en `.txt`, ou coller son texte ;
@@ -253,7 +254,7 @@ Je me suis aussi appuyé sur la [synthèse du L2](https://github.com/chergreg/jo
 **Ce que j'ai modifié :**
 
 - Tout est réécrit avec la bibliothèque standard (`html.parser`) : pas de BeautifulSoup ni de Pydantic, donc aucune installation.
-- Le prototype est découpé en modules : `guichet`, `fiches`, `remotive`, `normalisation`, `competences`, `fusion`, `analyse`, `regions`, `filtres`, `export`, `interface` (avec `interface_cv.js` et `interface_stats.js`), `candidature`, `lettre`, `historique`, `main`.
+- Le prototype est découpé en modules : `guichet`, `fiches`, `remotive`, `normalisation`, `competences`, `fusion`, `analyse`, `regions`, `filtres`, `export`, `interface` (avec `interface_cv.js`, `interface_stats.js` et `interface_suivi.js`), `candidature`, `lettre`, `historique`, `main`.
 - Nouveaux champs :
   - titre de l'employeur, description, tâches ;
   - date d'expiration et date de début ;
@@ -327,7 +328,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (216 tests)
+# Tests hors ligne (223 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -354,7 +355,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 216 |
+| Tests hors ligne | 33 | 223 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -566,6 +567,20 @@ Vérifications :
 - les 7 nouveaux tests (`test_interface_stats.py`) comparent avec Python à l'aide de Node.js, et vérifient la médiane d'un nombre pair de valeurs, le taux horaire jamais compté dans le salaire annuel et la lecture de l'historique (ligne abîmée ignorée). J'ai vérifié qu'ils échouent si on mélange les unités de salaire ou si on oublie « Non précisé » ;
 - dans Edge : mode clair, mode sombre, et largeur de téléphone avec le filtre Capitale-Nationale (25 offres : les graphiques suivent le filtre).
 
+### Vérification du suivi des candidatures (24 novembre)
+
+Essai d'abord, dans Edge, avec une page locale (`file://`) comme `offres.html` :
+- le navigateur garde les données d'une page locale après une nouvelle ouverture, après que le fichier a été recréé, et même quand la page est copiée dans un autre dossier ;
+- toutes les pages locales partagent le même stockage. Le suivi a donc un nom propre au projet (`jobs-insights-kandet.suivi.v1`) ;
+- une offre garde le même lien (numéro du Guichet-Emplois) d'une collecte à l'autre. C'est ce lien qui sert à la reconnaître : entre le 23 et le 24 novembre, 164 offres ont été retrouvées ainsi.
+
+Ce qui a été ajouté : `interface_suivi.js`, le bouton « Suivre » et le statut sur les cartes, la case « Mes offres suivies seulement », l'onglet « Mes candidatures » (statut, note, retrait, export CSV). Une copie du titre, de l'employeur et des liens est gardée, pour qu'une offre disparue reste dans le suivi.
+
+Vérifications :
+- dans Edge, avec de vrais clics : suivre le stage de Revenu Québec, passer à « Postulé », rouvrir la page (le statut est toujours là), ajouter une note, filtrer « Mes offres suivies seulement » (1 offre sur 172), puis retirer l'offre ;
+- capture de l'onglet avec une offre en entrevue et une offre fictive disparue (badges « N'est plus dans la dernière collecte » et « Expirée ») ;
+- les 7 nouveaux tests (`test_interface_suivi.py`) utilisent Node.js avec un faux stockage. Ils vérifient la relecture après une nouvelle ouverture, un statut inconnu refusé, un stockage abîmé (la page repart d'un suivi vide sans planter), un stockage bloqué (le message s'affiche), l'export CSV (une note qui commence par `=` n'est pas lue comme une formule par Excel), et l'absence de toute requête réseau dans la page.
+
 ### Ce que les données montrent (17 novembre)
 
 - **Salaire médian** (valeur basse de la fourchette) : 70 000 $ par année (111 offres), 36 $ de l'heure (68 offres).
@@ -593,6 +608,8 @@ Vérifications :
 - **Dépendance au site :** si le Guichet-Emplois change ses classes CSS ou ses balises RDFa, il faudra adapter `guichet.py` et `fiches.py`. Les tests utilisent une copie du balisage de novembre 2026.
 
 - **Régions :** la région est trouvée à partir du nom de la ville. Un lieu qui n'est pas une municipalité ni un arrondissement (hameau, quartier, « Différentes régions ») reste sans région. Un nom porté par des municipalités de deux régions différentes reste aussi sans région, sans qu'on en choisisse une.
+
+- **Suivi des candidatures :** il est gardé dans un seul navigateur, sur un seul ordinateur. Il disparaît si on efface les données du navigateur et il n'existe pas en navigation privée : il faut l'exporter de temps en temps. Il a été vérifié dans Edge seulement. Firefox traite les pages locales autrement et peut ne pas garder le suivi.
 
 - **Statistiques :** les médianes portent sur la valeur basse de la fourchette de salaire. Avec un filtre, certains graphiques ont peu d'offres : le nombre d'offres est toujours écrit à côté de la médiane, et le salaire d'un niveau n'est pas montré s'il y a moins de 3 salaires. L'historique ne commence que le 20 novembre.
 

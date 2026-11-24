@@ -114,7 +114,7 @@ class HistoryTests(unittest.TestCase):
         template = TEMPLATE_FILE.read_text(encoding="utf-8")
         self.assertIn('<button type="button" id="vue-stats" aria-pressed="false">Statistiques</button>', template)
         self.assertIn('<section id="stats" hidden', template)
-        self.assertIn('vue = params.get("vue") === "stats" ? "stats" : "liste";', template)
+        self.assertIn('vue = ["stats", "suivi"].includes(params.get("vue")) ? params.get("vue") : "liste";', template)
 
 
 if __name__ == "__main__":

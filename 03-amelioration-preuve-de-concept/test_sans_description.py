@@ -38,7 +38,7 @@ class WithoutDescriptionTests(unittest.TestCase):
         template = TEMPLATE_FILE.read_text(encoding="utf-8")
         # La case existe, n'est pas cochée par défaut et fait partie des filtres gardés dans l'adresse.
         self.assertRegex(template, r'<input type="checkbox" id="avecDescription">\s*Description complète seulement')
-        self.assertIn('"avecDescription", "tri"]', template)
+        self.assertIn('"avecDescription", "suivies", "tri"]', template)
         self.assertIn("if (avecDescription && !o.aDescription) return false;", template)
         self.assertIn("Pas de description sur le Guichet-Emplois", template)
         self.assertIn('["description_complete", (o) => (o.aDescription ? "oui" : "non")]', template)

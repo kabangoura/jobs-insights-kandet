@@ -390,6 +390,10 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - essai d'abord : région, salaire, niveau et technologies sont assez remplis pour un graphique. Le mode de travail (84 sur 183) et le type d'emploi (mots différents selon la source) ne le sont pas. Dans l'historique, seul le nombre d'offres par jour est fiable ;
   - ajout ensuite : `interface_stats.js`, `historique.read_history`, onglet « Statistiques » dans `offres.html` (4 tuiles, 6 graphiques qui suivent les filtres, un clic sur une barre filtre) ;
   - 7 nouveaux tests dans `test_interface_stats.py`, dont la comparaison avec Python par Node.js ; au total, 216 tests OK.
+- **Suivi des candidatures ✅ (24 novembre)** :
+  - essai d'abord : dans Edge, le stockage d'une page locale est gardé après une nouvelle ouverture et après une nouvelle collecte (page recréée). Le lien de l'offre (numéro du Guichet-Emplois) la reconnaît d'une collecte à l'autre ;
+  - ajout ensuite : `interface_suivi.js`, bouton « Suivre » et statut sur les cartes, filtre « Mes offres suivies seulement », onglet « Mes candidatures » avec note et export CSV ;
+  - 7 nouveaux tests dans `test_interface_suivi.py` (Node.js, faux stockage) ; au total, 223 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Score de pertinence pour un étudiant du DEC** : règles simples et affichées (stage, niveau débutant, technologies vues au cours). Le score doit être expliqué, pas une note magique.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.

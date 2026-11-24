@@ -23,7 +23,8 @@ Ouvrez ensuite **`offres.html`** d'un double-clic. Elle est recréée à chaque 
 - filtrer par région, ville, technologie, niveau, salaire ou stage ;
 - comparer les offres avec votre CV ;
 - vérifier votre lettre pour une offre ;
-- voir des statistiques (salaires, régions, technologies…) dans l'onglet « Statistiques ».
+- voir des statistiques (salaires, régions, technologies…) dans l'onglet « Statistiques » ;
+- suivre vos candidatures (statut, note) dans l'onglet « Mes candidatures ».
 
 Le CV et la lettre restent dans le navigateur : rien n'est envoyé.
 

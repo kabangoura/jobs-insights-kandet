@@ -194,6 +194,15 @@
   .colonne .remplissage-col { width: 24px; min-height: 2px; background: var(--barre); border-radius: 4px 4px 0 0; }
   .dates-colonnes { display: flex; gap: 14px; margin-top: 4px; }
   .dates-colonnes span { flex: 1; max-width: 64px; text-align: center; font-size: 12px; color: var(--doux); }
+  /* Suivi de mes candidatures */
+  .zone-suivi { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; font-size: 14px; }
+  .zone-suivi button[aria-pressed="true"] { font-weight: 600; }
+  select.statut { width: auto; padding: 4px 8px; font-size: 14px; }
+  .suivi-champs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+  .note-suivi { flex: 1 1 220px; padding: 6px 9px; font: inherit; font-size: 14px; border: 1px solid var(--bord); border-radius: 6px; background: var(--carte); color: var(--texte); }
+  #suivi-resume { font-size: 14px; color: var(--doux); }
+  #suivi-message { color: var(--rouge); }
+  #suivi-message:empty { display: none; }
   .semblables { margin-top: 8px; font-size: 14px; color: var(--doux); }
   .semblables ul { margin: 4px 0 0; padding-left: 20px; }
   #compte small.annonces { font-weight: 400; color: var(--doux); font-size: 14px; }
@@ -309,6 +318,7 @@
       <label class="case"><input type="checkbox" id="avecSalaire"> Salaire indiqué</label>
       <label class="case"><input type="checkbox" id="actives"> Cacher les offres expirées</label>
       <label class="case"><input type="checkbox" id="avecDescription"> Description complète seulement</label>
+      <label class="case"><input type="checkbox" id="suivies"> Mes offres suivies seulement</label>
     </div>
     <div class="champ">
       <label for="tri">Trier par</label>
@@ -353,7 +363,17 @@
     <div class="vues" role="group" aria-label="Affichage">
       <button type="button" id="vue-liste" aria-pressed="true">Liste des offres</button>
       <button type="button" id="vue-stats" aria-pressed="false">Statistiques</button>
+      <button type="button" id="vue-suivi" aria-pressed="false">Mes candidatures</button>
     </div>
+    <section id="suivi" hidden aria-label="Suivi de mes candidatures">
+      <p class="stats-intro">Les offres que vous suivez, avec leur statut et une note. Ce suivi reste dans ce navigateur, sur cet ordinateur : rien n'est envoyé. Il est gardé quand la page est recréée par une nouvelle collecte. Pensez à l'exporter de temps en temps.</p>
+      <p id="suivi-message" class="erreur" role="status"></p>
+      <div class="barre">
+        <div id="suivi-resume"></div>
+        <button type="button" id="suivi-exporter" class="principal" hidden>Exporter mon suivi (CSV)</button>
+      </div>
+      <div class="liste" id="suivi-liste"></div>
+    </section>
     <section id="stats" hidden aria-label="Statistiques des offres affichées">
       <p class="stats-intro" id="stats-intro"></p>
       <div class="tuiles" id="stats-tuiles"></div>
@@ -397,6 +417,7 @@
 <script>
 {{SCRIPT_CV}}
 {{SCRIPT_STATS}}
+{{SCRIPT_SUIVI}}
 </script>
 <script type="application/json" id="donnees">{{DONNEES}}</script>
 <script>
@@ -410,7 +431,7 @@
   const formatDate = new Intl.DateTimeFormat("fr-CA", { day: "numeric", month: "long", year: "numeric" });
   const dateLisible = (iso) => { const d = new Date(iso + "T00:00:00"); return isNaN(d) ? iso : formatDate.format(d); };
   const $ = (id) => document.getElementById(id);
-  const champs = ["q", "region", "ville", "techno", "niveau", "salaire", "unite", "stages", "nouvelles", "avecSalaire", "actives", "avecDescription", "tri"];
+  const champs = ["q", "region", "ville", "techno", "niveau", "salaire", "unite", "stages", "nouvelles", "avecSalaire", "actives", "avecDescription", "suivies", "tri"];
   let affichees = PAR_PAGE;
 
   // Comparaison sans accents ni majuscules : « montreal » trouve « Montréal ».
@@ -450,7 +471,7 @@
   // Lecture et écriture des filtres dans l'adresse (#region=…&techno=…) pour partager une recherche.
   function lireAdresse() {
     const params = new URLSearchParams(location.hash.slice(1));
-    vue = params.get("vue") === "stats" ? "stats" : "liste";
+    vue = ["stats", "suivi"].includes(params.get("vue")) ? params.get("vue") : "liste";
     for (const id of champs) {
       if (!params.has(id)) continue;
       const champ = $(id);
@@ -467,7 +488,7 @@
       if (champ.type === "checkbox") { if (champ.checked) params.set(id, "1"); }
       else if (champ.value && !(id === "tri" && (champ.value === "recent" || champ.value === "cv")) && !(id === "unite" && champ.value === "année")) params.set(id, champ.value);
     }
-    if (vue === "stats") params.set("vue", "stats");
+    if (vue !== "liste") params.set("vue", vue);
     const hash = params.toString();
     history.replaceState(null, "", hash ? "#" + hash : location.pathname + location.search);
   }
@@ -478,7 +499,7 @@
     const region = $("region").value, ville = $("ville").value, techno = $("techno").value, niveau = $("niveau").value;
     const salaire = parseFloat($("salaire").value), unite = $("unite").value;
     const stages = $("stages").checked, nouvelles = $("nouvelles").checked, avecSalaire = $("avecSalaire").checked, actives = $("actives").checked;
-    const avecDescription = $("avecDescription").checked;
+    const avecDescription = $("avecDescription").checked, suivies = $("suivies").checked;
     return OFFRES.filter((o) => {
       if (region && o.region !== region) return false;
       if (ville && o.ville !== ville) return false;
@@ -489,6 +510,7 @@
       if (avecSalaire && o.salMin === null) return false;
       if (!isNaN(salaire) && (o.salMin === null || o.unite !== unite || o.salMin < salaire)) return false;
       if (avecDescription && !o.aDescription) return false;
+      if (suivies && !suivi.obtenir(o)) return false;
       if (actives) { const j = joursAvant(o.expire); if (j !== null && j < 0) return false; }
       if (mots.length) {
         const texte = simple([o.titre, o.titreCnp, o.employeur, o.ville, o.region, o.technos.join(" "), o.competences.join(" "), o.resume].join(" "));
@@ -652,6 +674,8 @@
       art.append(bloc);
     }
 
+    art.append(zoneSuivi(o));
+
     const liens = element("div", "liens");
     const principal = lienSur(o.lien, o.sites[0] === "Remotive" ? "Voir l'offre sur Remotive" : "Voir l'offre sur le Guichet-Emplois");
     if (principal) liens.append(principal);
@@ -807,6 +831,98 @@
     mettreAJour(false);
   }
 
+  // ---- Suivi de mes candidatures (interface_suivi.js) : gardé dans ce navigateur seulement ----
+  let suivi;
+  try { suivi = creerSuivi(window.localStorage); }
+  catch (e) { suivi = creerSuivi({ getItem() { throw e; }, setItem() { throw e; } }); }
+  const CLES_COLLECTE = new Set(OFFRES.map(cleOffre));
+
+  function majCompteSuivi() {
+    const n = suivi.nombre();
+    $("vue-suivi").textContent = n ? `Mes candidatures (${n})` : "Mes candidatures";
+  }
+
+  function choixStatut(valeur, auChangement) {
+    const select = element("select", "statut");
+    select.setAttribute("aria-label", "Statut de ma candidature");
+    for (const s of STATUTS) { const opt = element("option", "", s); opt.value = s; select.append(opt); }
+    select.value = valeur;
+    select.addEventListener("change", () => auChangement(select.value));
+    return select;
+  }
+
+  // Zone « Suivre cette offre » sur une carte.
+  function zoneSuivi(o) {
+    const zone = element("div", "zone-suivi");
+    const s = suivi.obtenir(o);
+    const bouton = element("button", "lien-bouton", s ? "★ Suivie (retirer)" : "☆ Suivre cette offre");
+    bouton.type = "button";
+    bouton.setAttribute("aria-pressed", String(Boolean(s)));
+    bouton.addEventListener("click", () => {
+      const ok = s ? suivi.retirer(o) : suivi.suivre(o);
+      if (!ok) alert("Ce navigateur ne permet pas d'enregistrer le suivi pour cette page.");
+      majCompteSuivi();
+      mettreAJour(false);
+    });
+    zone.append(bouton);
+    if (s) zone.append(choixStatut(s.statut, (statut) => { suivi.changer(o, { statut }); }));
+    return zone;
+  }
+
+  function afficherSuivi() {
+    const liste = suivi.liste();
+    const zone = $("suivi-liste");
+    $("suivi-message").textContent = suivi.disponible() ? "" :
+      "Ce navigateur ne permet pas d'enregistrer le suivi pour cette page (navigation privée ou stockage bloqué).";
+    const parStatut = STATUTS.map((st) => [st, liste.filter((x) => x.statut === st).length]).filter(([, n]) => n);
+    $("suivi-resume").textContent = liste.length
+      ? `${liste.length} offre${liste.length > 1 ? "s" : ""} suivie${liste.length > 1 ? "s" : ""} : ` + parStatut.map(([st, n]) => `${n} ${st.toLowerCase()}`).join(" · ")
+      : "Aucune offre suivie. Dans la liste, cliquez sur « ☆ Suivre cette offre » pour la garder ici.";
+    $("suivi-exporter").hidden = !liste.length;
+    zone.replaceChildren(...liste.map((x) => {
+      const o = { lien: x.lien, titre: x.titre, employeur: x.employeur, ville: x.ville, lienOrigine: x.lienOrigine, expire: x.expire };
+      const art = element("article", "suivi-ligne");
+      const h3 = element("h3");
+      h3.append(lienSur(x.lien, x.titre) || document.createTextNode(x.titre));
+      art.append(h3);
+      art.append(element("div", "meta", [x.employeur || "Employeur non précisé", x.ville].filter((v) => v).join(" · ")));
+      const etat = element("div", "badges");
+      if (!CLES_COLLECTE.has(x.cle)) etat.append(element("span", "badge urgent", "N'est plus dans la dernière collecte"));
+      const j = joursAvant(x.expire);
+      if (j !== null && j < 0) etat.append(element("span", "badge urgent", "Expirée"));
+      else if (j !== null && j <= 7) etat.append(element("span", "badge bientot", j === 0 ? "Expire aujourd'hui" : `Expire dans ${j} j`));
+      etat.append(element("span", "badge", `ajoutée le ${dateLisible(x.ajoutee)} · modifiée le ${dateLisible(x.maj)}`));
+      art.append(etat);
+      const ligne = element("div", "suivi-champs");
+      ligne.append(choixStatut(x.statut, (statut) => { suivi.changer(o, { statut }); afficherSuivi(); }));
+      const note = element("input", "note-suivi");
+      note.type = "text"; note.maxLength = 500; note.value = x.note || "";
+      note.placeholder = "Note : contact, date d'entrevue, relance…";
+      note.setAttribute("aria-label", "Note sur cette candidature");
+      note.addEventListener("change", () => { suivi.changer(o, { note: note.value }); });
+      const retirer = element("button", "", "Retirer");
+      retirer.type = "button";
+      retirer.addEventListener("click", () => { suivi.retirer(o); majCompteSuivi(); afficherSuivi(); });
+      ligne.append(note, retirer);
+      art.append(ligne);
+      const liens = element("div", "liens");
+      const origine = lienSur(x.lienOrigine, "Annonce d'origine");
+      if (origine) liens.append(origine);
+      if (liens.children.length) art.append(liens);
+      return art;
+    }));
+  }
+
+  function exporterSuivi() {
+    const bom = String.fromCharCode(0xFEFF);
+    const blob = new Blob([bom + suiviEnCsv(suivi.liste())], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "mes-candidatures.csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
   let resultatsCourants = [];
   const NOMBRE_POSTES = new Set(OFFRES.map((o) => o.groupe)).size;
 
@@ -832,12 +948,21 @@
     if (resultatsCourants.length !== cartes.length) {
       compte.append(element("small", "annonces", ` · ${resultatsCourants.length} annonces`));
     }
-    const statistiques = vue === "stats";
-    $("vue-liste").setAttribute("aria-pressed", String(!statistiques));
+    const statistiques = vue === "stats", candidatures = vue === "suivi";
+    $("vue-liste").setAttribute("aria-pressed", String(vue === "liste"));
     $("vue-stats").setAttribute("aria-pressed", String(statistiques));
+    $("vue-suivi").setAttribute("aria-pressed", String(candidatures));
     $("stats").hidden = !statistiques;
-    $("populaires").hidden = statistiques;
-    $("liste").hidden = statistiques;
+    $("suivi").hidden = !candidatures;
+    $("populaires").hidden = vue !== "liste";
+    $("liste").hidden = vue !== "liste";
+    if (candidatures) {
+      // Toutes les offres suivies, même hors filtres et même disparues de la collecte.
+      afficherSuivi();
+      $("plus").hidden = true;
+      ecrireAdresse();
+      return;
+    }
     if (statistiques) {
       afficherStatistiques(cartes.map((c) => c.o));
       $("plus").hidden = true;
@@ -1039,6 +1164,9 @@
   $("exporter").addEventListener("click", exporterCsv);
   $("vue-liste").addEventListener("click", () => changerVue("liste"));
   $("vue-stats").addEventListener("click", () => changerVue("stats"));
+  $("vue-suivi").addEventListener("click", () => changerVue("suivi"));
+  $("suivi-exporter").addEventListener("click", exporterSuivi);
+  majCompteSuivi();
   $("copier").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(location.href); $("copier").textContent = "Lien copié ✓"; }
     catch { $("copier").textContent = "Copiez l'adresse de la page"; }
