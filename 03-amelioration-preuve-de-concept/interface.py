@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from modele import AggregatedOffer
+from semblables import republished, similar_groups
 from texte import french_date
 
 
@@ -110,8 +111,19 @@ def page_created_text(moment: datetime | None = None) -> str:
     return f"page créée le {french_date(moment.date().isoformat())} à {moment.hour} h {moment.minute:02d}"
 
 
+def count_text(posts: int, announcements: int) -> str:
+    """« 171 offres (183 annonces) » quand des annonces semblables sont regroupées."""
+    text = f"{posts} offre{'s' if posts > 1 else ''}"
+    return text if posts == announcements else f"{text} ({announcements} annonces)"
+
+
 def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, changes_text: str = "") -> str:
     rows = [offer_to_row(offer, number) for number, offer in enumerate(offers, start=1)]
+    # Annonces semblables (semblables.py) : la page les montre sur une seule carte.
+    groups = similar_groups(offers)
+    for row, group, again in zip(rows, groups, republished(offers, groups)):
+        row["groupe"] = group + 1  # numéro (id) de la première annonce du groupe
+        row["republiee"] = again
     generated_on = generated_on or date.today().isoformat()
     template = TEMPLATE_FILE.read_text(encoding="utf-8")
     cv_script = CV_SCRIPT_FILE.read_text(encoding="utf-8").replace("</", "<\\/")
@@ -119,7 +131,7 @@ def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, c
         template.replace("{{DATE}}", html.escape(french_date(generated_on)))
         .replace("{{CREATION}}", html.escape(page_created_text()))
         .replace("{{NOUVEAUTES}}", html.escape(changes_text))
-        .replace("{{NOMBRE}}", str(len(rows)))
+        .replace("{{NOMBRE}}", count_text(len(set(groups)), len(rows)))
         .replace("{{REGLES}}", _json_for_html(browser_rules()))
         .replace("{{SCRIPT_CV}}", cv_script)
         .replace("{{DONNEES}}", _json_for_html(rows))

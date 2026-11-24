@@ -163,6 +163,9 @@
   details dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 8px 0 0; }
   details dt { color: var(--doux); }
   details dd { margin: 0; }
+  .semblables { margin-top: 8px; font-size: 14px; color: var(--doux); }
+  .semblables ul { margin: 4px 0 0; padding-left: 20px; }
+  #compte small.annonces { font-weight: 400; color: var(--doux); font-size: 14px; }
   .liens { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 14px; }
   .vide { text-align: center; padding: 40px 16px; color: var(--doux); background: var(--carte); border: 1px dashed var(--bord); border-radius: 10px; }
   #plus { display: block; margin: 16px auto 0; }
@@ -226,7 +229,7 @@
 <body>
 <header>
   <h1>Offres d'emploi et de stage en informatique au Québec</h1>
-  <p>{{NOMBRE}} offres · collecte du {{DATE}}{{NOUVEAUTES}} · Guichet-Emplois (et ses sites partenaires) et Remotive</p>
+  <p>{{NOMBRE}} · collecte du {{DATE}}{{NOUVEAUTES}} · Guichet-Emplois (et ses sites partenaires) et Remotive</p>
   <p class="creation">{{CREATION}} · relancez <code>python main.py</code> pour une nouvelle collecte, puis rafraîchissez cette page (F5)</p>
 </header>
 
@@ -436,7 +439,7 @@
       if (techno && !o.technos.includes(techno)) return false;
       if (niveau && o.niveau !== niveau) return false;
       if (stages && !o.stage) return false;
-      if (nouvelles && !o.nouvelle) return false;
+      if (nouvelles && (!o.nouvelle || o.republiee)) return false;
       if (avecSalaire && o.salMin === null) return false;
       if (!isNaN(salaire) && (o.salMin === null || o.unite !== unite || o.salMin < salaire)) return false;
       if (actives) { const j = joursAvant(o.expire); if (j !== null && j < 0) return false; }
@@ -498,7 +501,18 @@
     return a;
   }
 
-  function carte(o) {
+  // « Montréal · publiée le 24 novembre 2026 · 19 $ par heure » pour une annonce semblable.
+  function texteAnnonce(a, o) {
+    const parties = [a.ville || a.lieu || "Lieu non précisé"];
+    if (a.publiee) parties.push(`publiée le ${dateLisible(a.publiee)}`);
+    const salaire = texteSalaire(a);
+    if (salaire && salaire !== texteSalaire(o)) parties.push(salaire);
+    if (a.republiee) parties.push("republiée");
+    else if (a.nouvelle) parties.push("nouvelle");
+    return parties.join(" · ");
+  }
+
+  function carte(o, autres = []) {
     const art = element("article");
     art.dataset.id = o.id;
     const h3 = element("h3");
@@ -514,7 +528,9 @@
     art.append(meta);
 
     const badges = element("div", "badges");
-    if (o.nouvelle) badges.append(element("span", "badge nouvelle", "Nouvelle"));
+    if (o.republiee) badges.append(element("span", "badge", "Republiée"));
+    else if (o.nouvelle) badges.append(element("span", "badge nouvelle", "Nouvelle"));
+    if (autres.length) badges.append(element("span", "badge", `${autres.length + 1} annonces`));
     if (o.stage) badges.append(element("span", "badge stage", o.stage));
     if (o.niveau) badges.append(element("span", "badge", `Niveau ${o.niveau}`));
     if (o.mode) badges.append(element("span", "badge", o.mode));
@@ -570,6 +586,19 @@
       art.append(d);
     }
 
+    if (autres.length) {
+      const bloc = element("div", "semblables");
+      bloc.append(element("div", "", `Même poste publié ${autres.length + 1} fois par cet employeur. Les autres annonces :`));
+      const ul = element("ul");
+      for (const a of autres) {
+        const li = element("li");
+        li.append(lienSur(a.lien, texteAnnonce(a, o)) || document.createTextNode(texteAnnonce(a, o)));
+        ul.append(li);
+      }
+      bloc.append(ul);
+      art.append(bloc);
+    }
+
     const liens = element("div", "liens");
     const principal = lienSur(o.lien, o.sites[0] === "Remotive" ? "Voir l'offre sur Remotive" : "Voir l'offre sur le Guichet-Emplois");
     if (principal) liens.append(principal);
@@ -598,21 +627,38 @@
   }
 
   let resultatsCourants = [];
+  const NOMBRE_POSTES = new Set(OFFRES.map((o) => o.groupe)).size;
+
+  // Une carte par poste : les annonces semblables (même titre, même employeur, même site) vont sur la carte
+  // de la première trouvée dans l'ordre du tri. Les autres restent visibles sur cette carte (semblables.py).
+  function regrouper(liste) {
+    const parGroupe = new Map(), cartes = [];
+    for (const o of liste) {
+      const c = parGroupe.get(o.groupe);
+      if (c) c.autres.push(o);
+      else { const nouvelle = { o, autres: [] }; parGroupe.set(o.groupe, nouvelle); cartes.push(nouvelle); }
+    }
+    return cartes;
+  }
 
   function mettreAJour(retourDebut) {
     if (retourDebut) affichees = PAR_PAGE;
     resultatsCourants = trier(filtrer());
+    const cartes = regrouper(resultatsCourants);
     const compte = $("compte");
-    compte.dataset.count = resultatsCourants.length;
-    compte.textContent = `${resultatsCourants.length} offre${resultatsCourants.length > 1 ? "s" : ""} sur ${OFFRES.length}`;
-    afficherPopulaires(resultatsCourants);
+    compte.dataset.count = cartes.length;
+    compte.textContent = `${cartes.length} offre${cartes.length > 1 ? "s" : ""} sur ${NOMBRE_POSTES}`;
+    if (resultatsCourants.length !== cartes.length) {
+      compte.append(element("small", "annonces", ` · ${resultatsCourants.length} annonces`));
+    }
+    afficherPopulaires(cartes.map((c) => c.o));
     const liste = $("liste");
-    if (!resultatsCourants.length) {
+    if (!cartes.length) {
       liste.replaceChildren(element("div", "vide", "Aucune offre ne correspond à ces filtres. Essayez d'en retirer un."));
     } else {
-      liste.replaceChildren(...resultatsCourants.slice(0, affichees).map(carte));
+      liste.replaceChildren(...cartes.slice(0, affichees).map((c) => carte(c.o, c.autres)));
     }
-    const reste = resultatsCourants.length - affichees;
+    const reste = cartes.length - affichees;
     $("plus").hidden = reste <= 0;
     $("plus").textContent = `Afficher plus d'offres (${Math.max(reste, 0)} restantes)`;
     ecrireAdresse();
@@ -781,7 +827,7 @@
   remplirVilles();
   remplirListe($("techno"), compter(OFFRES.flatMap((o) => o.technos)), true);
   // La case « Nouvelles offres seulement » n'apparaît que s'il y a des nouveautés depuis la collecte précédente.
-  $("case-nouvelles").hidden = !OFFRES.some((o) => o.nouvelle);
+  $("case-nouvelles").hidden = !OFFRES.some((o) => o.nouvelle && !o.republiee);
   lireAdresse();
 
   for (const id of champs) {

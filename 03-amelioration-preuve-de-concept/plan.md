@@ -378,6 +378,10 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - problème constaté : après `python main.py`, la page ouverte ne changeait pas, et une page supprimée n'était pas recréée (elle n'était faite qu'avec `--html`) ;
   - correction : `main.py` recrée `offres.html` à chaque lancement, à côté de `offres.json`, avec toutes les offres. « page créée le … à … » s'affiche en haut. `--html` garde seulement les offres filtrées, `--sans-html` ne fait pas la page ;
   - 5 nouveaux tests dans `test_interface.py` ; au total, 197 tests OK.
+- **Annonces semblables ✅ (24 novembre)** :
+  - essai d'abord : 10 groupes (21 annonces) sur 183 avec le même titre, le même employeur et le même site, dont 3 postes republiés comptés à tort comme nouveaux ;
+  - ajout ensuite : `semblables.py`, une carte par poste dans `offres.html` avec la liste des autres annonces, badge « Republiée », en-tête « 172 offres (183 annonces) » ;
+  - 9 nouveaux tests dans `test_semblables.py` ; au total, 206 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Score de pertinence pour un étudiant du DEC** : règles simples et affichées (stage, niveau débutant, technologies vues au cours). Le score doit être expliqué, pas une note magique.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.

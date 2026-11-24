@@ -33,6 +33,7 @@ from lettre import build_letter_report, check_letter, find_offer, letter_tips
 from texte import french_date
 from guichet import CNP_CODES_TI, GUICHET_DELAY_SECONDS, GUICHET_SEARCH_URL, fetch_guichet
 from historique import Changes, append_history, clean_cache, compare_with_previous, load_previous
+from semblables import republished, similar_groups
 from modele import AggregatedOffer, SourceRecord
 from normalisation import normalize_record
 from remotive import (
@@ -430,10 +431,21 @@ def collected_on(path: Path) -> str | None:
         return None
 
 
-def describe_changes(new_offers: int, previous_date: str) -> str:
-    """Phrase affichée en haut de la page HTML."""
+def describe_changes(offers: list[AggregatedOffer], previous_date: str) -> str:
+    """Phrase affichée en haut de la page HTML.
+
+    On compte comme dans la page : les annonces semblables font une seule offre
+    (semblables.py), et une annonce republiée n'est pas une nouvelle offre.
+    """
+    groups = similar_groups(offers)
+    again = republished(offers, groups)
+    new_offers = len({groups[i] for i, offer in enumerate(offers) if offer.new_since_previous and not again[i]})
     plural = "s" if new_offers > 1 else ""
-    return f" · {new_offers} nouvelle{plural} offre{plural} depuis la collecte du {french_date(previous_date)}"
+    text = f" · {new_offers} nouvelle{plural} offre{plural} depuis la collecte du {french_date(previous_date)}"
+    if any(again):
+        count = sum(again)
+        text += f" (et {count} annonce{'s' if count > 1 else ''} republiée{'s' if count > 1 else ''})"
+    return text
 
 
 def print_changes(changes: Changes, had_errors: bool) -> None:
@@ -446,11 +458,11 @@ def print_changes(changes: Changes, had_errors: bool) -> None:
         print("ATTENTION : la collecte a eu des erreurs. Certaines offres « disparues » sont peut-être encore en ligne.")
 
 
-def changes_text_from_file(path: Path) -> str:
+def changes_text_from_file(path: Path, offers: list[AggregatedOffer]) -> str:
     """Phrase sur les nouveautés, lue dans un offres.json (option --depuis)."""
     try:
         changes = json.loads(path.read_text(encoding="utf-8")).get("changes_since_previous")
-        return describe_changes(int(changes["new_offers"]), str(changes["previous_generated_at"])) if changes else ""
+        return describe_changes(offers, str(changes["previous_generated_at"])) if changes else ""
     except (OSError, ValueError, AttributeError, TypeError, KeyError):
         return ""
 
@@ -501,7 +513,7 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit(f"Impossible de lire {args.depuis} : {error}")
         report = None
         collection_date = collected_on(args.depuis)
-        changes_text = changes_text_from_file(args.depuis)
+        changes_text = changes_text_from_file(args.depuis, offers)
         print(f"{len(offers)} offres relues depuis {args.depuis} (aucun téléchargement).")
     else:
         offers, report = collect(args)
@@ -513,7 +525,7 @@ def main(argv: list[str] | None = None) -> None:
         changes_text = ""
         if changes:
             print_changes(changes, bool(report["errors"]))
-            changes_text = describe_changes(changes.new_count, changes.previous_date)
+            changes_text = describe_changes(offers, changes.previous_date)
 
     if not offers:
         print("Aucune offre ne correspond aux critères.")

@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 197 tests`. Deux tests comparent la page avec Python à l'aide de Node.js, l'un pour le CV et l'autre pour la lettre. Si Node.js n'est pas installé, ces deux tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 206 tests`. Deux tests comparent la page avec Python à l'aide de Node.js, l'un pour le CV et l'autre pour la lettre. Si Node.js n'est pas installé, ces deux tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -68,7 +68,8 @@ Dans la page :
 - **Tri** : plus récentes, salaire le plus élevé, expire bientôt, titre.
 - **Technologies demandées** : un clic sur une technologie filtre les offres.
 - **Chaque offre** affiche le titre de l'employeur, le salaire, le niveau, les badges (« Stage », « Expire dans 3 j »…), un résumé, les technologies et « Plus de détails » (études, expérience, langues). Elle donne aussi le lien vers l'offre et vers l'annonce d'origine.
-- **« Exporter en CSV »** enregistre les offres affichées pour Excel.
+- **Annonces semblables** : quand un employeur publie le même poste plusieurs fois (même titre, même site), la page montre une seule carte avec « 3 annonces ». Les autres annonces sont listées sur la carte, avec leur ville, leur date et leur lien. Un poste republié alors qu'il était déjà en ligne a le badge « Republiée » au lieu de « Nouvelle ».
+- **« Exporter en CSV »** enregistre les offres affichées pour Excel (une ligne par annonce).
 - **« Copier le lien de cette recherche »** garde les filtres dans l'adresse de la page. Par exemple, `offres.html#region=Estrie&techno=SQL` rouvre la page avec ces filtres.
 - La page s'adapte au téléphone (filtres repliables) et au mode sombre.
 - **« Comparer les offres avec mon CV »** (en haut des résultats) :
@@ -277,6 +278,7 @@ Je me suis aussi appuyé sur la [synthèse du L2](https://github.com/chergreg/jo
 - Collecte régulière (module `historique`) :
   - comparaison avec la collecte précédente : offres nouvelles et disparues ;
   - badge « Nouvelle » et filtre dans la page ;
+  - annonces semblables regroupées sur une seule carte, et badge « Republiée » (module `semblables`) ;
   - historique CSV et ménage du cache (`--nettoyer-cache`) ;
   - scripts PowerShell `collecte-reguliere.ps1` et `planifier-collecte.ps1` (Planificateur de tâches de Windows).
 - Filtres et export : `--ville`, `--region`, `--techno`, `--niveau`, `--stages`, `--salaire-min`, `--employeur`, export `--csv` pour Excel, et `--depuis` pour filtrer une collecte déjà faite sans Internet (modules `filtres` et `export`).
@@ -323,7 +325,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (197 tests)
+# Tests hors ligne (206 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -350,7 +352,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 197 |
+| Tests hors ligne | 33 | 206 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -493,6 +495,29 @@ Les 13 nouveaux tests (`test_historique.py`) vérifient notamment :
 - le ménage du cache, qui ne se fait pas après une collecte partielle ;
 - le marqueur UTF-8 des scripts PowerShell.
 
+### Vérification des annonces semblables (24 novembre)
+
+Question de départ : dans la page, trois cartes « Bilingual Mortgage Operations Specialist » de Recrute Action se suivaient (deux à Montréal, une à Laval). Étaient-ce des doublons ?
+
+Essai sur la collecte du 24 novembre (183 annonces) :
+
+| Constat | Nombre |
+|---|---|
+| Groupes d'annonces avec le même titre, le même employeur et le même site | 10 groupes, 21 annonces |
+| Postes publiés le même jour dans plusieurs villes (Recrute Action, FOP Experts Conseils) | 5 |
+| Postes republiés plus tard alors que l'ancienne annonce était encore en ligne (Ville de Québec, Kativik) | 3 |
+| Description identique ou presque (quand elle existe) | 7 groupes sur 8 (le 8e : la même offre, une fois en anglais et une fois en français) |
+
+- Chaque annonce a son propre numéro sur le Guichet-Emplois. Ce ne sont donc pas des erreurs de collecte, et `fusion.py` a raison de ne pas les fusionner : un employeur peut avoir plusieurs postes identiques à pourvoir.
+- Les 3 postes republiés étaient comptés comme « nouvelles offres », alors que l'annonce précédente était déjà en ligne.
+
+Ce qui a été ajouté :
+- `semblables.py` dit quelles annonces vont ensemble. Rien n'est supprimé : toutes les annonces restent dans `offres.json`, dans le CSV et sur la carte ;
+- dans la page, une carte par poste : 172 offres (183 annonces) ;
+- en haut de la page : « 14 nouvelles offres depuis la collecte du 23 novembre 2026 (et 3 annonces republiées) ». Le filtre « Nouvelles offres seulement » donne aussi 14 offres.
+
+Vérifié dans Edge avec la vraie collecte : la recherche « mortgage » donne 1 offre (3 annonces), avec Montréal et Laval listées sur la carte. Les 9 nouveaux tests (`test_semblables.py`) couvrent le cas de Recrute Action, les accents et la ponctuation dans les titres, un autre employeur ou un autre site (pas regroupés), un employeur absent (jamais regroupé) et le compte des nouvelles offres.
+
 ### Ce que les données montrent (17 novembre)
 
 - **Salaire médian** (valeur basse de la fourchette) : 70 000 $ par année (111 offres), 36 $ de l'heure (68 offres).
@@ -520,6 +545,8 @@ Les 13 nouveaux tests (`test_historique.py`) vérifient notamment :
 - **Dépendance au site :** si le Guichet-Emplois change ses classes CSS ou ses balises RDFa, il faudra adapter `guichet.py` et `fiches.py`. Les tests utilisent une copie du balisage de novembre 2026.
 
 - **Régions :** la région est trouvée à partir du nom de la ville. Un lieu qui n'est pas une municipalité ni un arrondissement (hameau, quartier, « Différentes régions ») reste sans région. Un nom porté par des municipalités de deux régions différentes reste aussi sans région, sans qu'on en choisisse une.
+
+- **Annonces semblables :** la règle compare le titre, l'employeur et le site. Deux vrais postes différents avec exactement le même titre chez le même employeur sont donc montrés sur la même carte, mais chacun garde sa ligne et son lien. Un même poste publié par deux employeurs différents (par exemple deux agences) n'est pas regroupé.
 
 - **Page HTML :** c'est une copie des offres au moment de sa création. Elle est recréée à chaque lancement de `main.py`, mais une page déjà ouverte ne change qu'après un rafraîchissement (F5). Le bouton « Copier le lien » demande l'accès au presse-papiers : certains navigateurs le refusent pour un fichier ouvert en local, et la page affiche alors « Copiez l'adresse de la page ».
 

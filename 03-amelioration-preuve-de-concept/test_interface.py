@@ -65,7 +65,7 @@ class RowTests(unittest.TestCase):
 
 class PageTests(unittest.TestCase):
     def test_offers_are_embedded_and_counted(self) -> None:
-        offers = [offer(1, city="Québec", region="Capitale-Nationale"), offer(2, technologies=["SQL"])]
+        offers = [offer(1, city="Québec", region="Capitale-Nationale"), offer(2, original_title="Autre poste", technologies=["SQL"])]
         page = build_html(offers, generated_on="2026-11-17")
         rows = embedded_rows(page)
         self.assertEqual(len(rows), 2)
@@ -97,7 +97,7 @@ class PageTests(unittest.TestCase):
     def test_empty_list(self) -> None:
         page = build_html([], generated_on="2026-11-17")
         self.assertEqual(embedded_rows(page), [])
-        self.assertIn("0 offres", page)
+        self.assertIn("0 offre ·", page)
 
 
 class MainHtmlTests(CollecteSimulee, unittest.TestCase):

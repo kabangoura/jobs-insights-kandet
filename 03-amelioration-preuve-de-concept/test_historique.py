@@ -118,7 +118,9 @@ class RegularCollectionTests(unittest.TestCase):
         with (
             patch("guichet.fetch_url", return_value=page),
             patch("guichet.time.sleep"),
-            patch("fiches.fetch_url", return_value=make_posting().encode("utf-8")),
+            # Un titre différent par fiche : 101 à 104 sont quatre postes différents (voir semblables.py).
+            patch("fiches.fetch_url", side_effect=lambda url, *_, **__: make_posting(
+                original_title=f"Poste {url.rstrip('/').rsplit('/', 1)[-1]}").encode("utf-8")),
             patch("fiches.time.sleep"),
             patch("main.load_remotive_payload", return_value={"jobs": []}),
             contextlib.redirect_stdout(output),
