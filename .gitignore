@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Données locales : elles se recréent avec main.py (chaque sous-dossier a aussi son .gitignore)
+offres.json
+remotive-cache.json
+cache/
+
+# CV, lettres et rapports personnels : ne jamais les publier
+*.docx
+*.pdf
+rapport-*.md

@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offres TI au Québec</title>
+<style>
+  :root {
+    --fond: #f5f6f8;
+    --carte: #ffffff;
+    --texte: #1d2330;
+    --doux: #5b6475;
+    --bord: #dfe3ea;
+    --accent: #1f5fbf;
+    --accent-fond: #e8f0fc;
+    --sur-accent: #ffffff;
+    --vert: #1b7a46;
+    --vert-fond: #e3f4ea;
+    --orange: #a35a00;
+    --orange-fond: #fdf0dc;
+    --rouge: #b42318;
+    --rouge-fond: #fdecea;
+    --ombre: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #12151b;
+      --carte: #1b2029;
+      --texte: #e6e9ef;
+      --doux: #a1a9b8;
+      --bord: #2d3440;
+      --accent: #7aa7ff;
+      --accent-fond: #1d2a44;
+      --sur-accent: #0d1526;
+      --vert: #6fd39b;
+      --vert-fond: #173426;
+      --orange: #f2b45c;
+      --orange-fond: #3a2b14;
+      --rouge: #ff8a80;
+      --rouge-fond: #3d1c1a;
+      --ombre: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    background: var(--fond);
+    color: var(--texte);
+  }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--bord);
+    background: var(--carte);
+  }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; color: var(--doux); }
+  .page {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: 24px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+  }
+  aside {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+    background: var(--carte);
+    border: 1px solid var(--bord);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: var(--ombre);
+  }
+  .page > * { min-width: 0; } /* évite que le contenu dépasse sur petit écran */
+  #panneau > summary { list-style: none; cursor: default; display: block; margin-bottom: 12px; }
+  #panneau > summary::-webkit-details-marker { display: none; }
+  #panneau > summary h2 { font-size: 15px; margin: 0; display: inline; color: var(--texte); }
+  #panneau > summary .ouvrir { display: none; }
+  .champ { margin-bottom: 12px; }
+  .champ label, .champ .titre-champ { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  input[type="search"], input[type="number"], select {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid var(--bord);
+    border-radius: 6px;
+    background: var(--fond);
+    color: var(--texte);
+    font: inherit;
+  }
+  .ligne { display: flex; gap: 6px; }
+  .ligne > * { flex: 1; }
+  .case { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }
+  .case input { width: 16px; height: 16px; margin: 0; }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 7px 12px;
+    border: 1px solid var(--bord);
+    background: var(--carte);
+    color: var(--texte);
+  }
+  button:hover { border-color: var(--accent); }
+  button.principal { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); font-weight: 600; }
+  #effacer { width: 100%; margin-top: 4px; }
+  .barre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  #compte { font-size: 16px; font-weight: 600; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .technos-populaires { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; align-items: center; }
+  .technos-populaires span.etiquette { color: var(--doux); font-size: 13px; margin-right: 2px; }
+  .puce {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    background: var(--fond);
+    border: 1px solid var(--bord);
+    color: var(--texte);
+  }
+  button.puce { padding: 2px 9px; }
+  button.puce[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--sur-accent); }
+  .liste { display: grid; gap: 12px; }
+  article {
+    background: var(--carte);
+    border: 1px solid var(--bord);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--ombre);
+  }
+  article h3 { margin: 0; font-size: 16.5px; line-height: 1.3; }
+  article h3 a { text-decoration: none; }
+  article h3 a:hover { text-decoration: underline; }
+  .cnp { color: var(--doux); font-size: 13px; margin-top: 2px; }
+  .meta { color: var(--doux); margin-top: 4px; font-size: 14px; }
+  .meta strong { color: var(--texte); font-weight: 600; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .badge { font-size: 12.5px; padding: 2px 8px; border-radius: 6px; background: var(--accent-fond); color: var(--accent); }
+  .badge.stage { background: var(--vert-fond); color: var(--vert); font-weight: 600; }
+  .badge.nouvelle { background: var(--accent); color: var(--sur-accent); font-weight: 600; }
+  .badge.bientot { background: var(--orange-fond); color: var(--orange); }
+  .badge.urgent { background: var(--rouge-fond); color: var(--rouge); font-weight: 600; }
+  .salaire { margin-top: 8px; font-weight: 600; }
+  .salaire small { font-weight: 400; color: var(--doux); }
+  .resume { margin: 8px 0 0; color: var(--texte); }
+  .technos { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  details { margin-top: 8px; font-size: 14px; }
+  details summary { cursor: pointer; color: var(--accent); }
+  details dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 8px 0 0; }
+  details dt { color: var(--doux); }
+  details dd { margin: 0; }
+  .liens { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 14px; }
+  .vide { text-align: center; padding: 40px 16px; color: var(--doux); background: var(--carte); border: 1px dashed var(--bord); border-radius: 10px; }
+  #plus { display: block; margin: 16px auto 0; }
+  /* Comparaison avec un CV */
+  .bloc-cv { background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; box-shadow: var(--ombre); }
+  .bloc-cv > details > summary { cursor: pointer; font-weight: 600; }
+  .bloc-cv .discret { font-weight: 400; color: var(--doux); font-size: 13.5px; }
+  .bloc-cv .aide { color: var(--doux); font-size: 14px; margin: 10px 0; }
+  .bloc-cv textarea {
+    width: 100%; min-height: 110px; padding: 8px 10px; margin-top: 8px; font: inherit; font-size: 14px;
+    border: 1px solid var(--bord); border-radius: 6px; background: var(--fond); color: var(--texte); resize: vertical;
+  }
+  .bloc-cv .actions { margin-top: 8px; }
+  #cv-message { margin: 8px 0 0; font-size: 14px; }
+  #cv-message.erreur { color: var(--rouge); }
+  #cv-profil { margin-top: 10px; font-size: 14px; display: grid; gap: 4px; }
+  #cv-profil b { font-weight: 600; }
+  .cv-ligne { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--fond); font-size: 14px; display: grid; gap: 4px; }
+  .note-cv { display: inline-block; font-weight: 700; padding: 1px 8px; border-radius: 6px; margin-right: 6px; }
+  .note-cv.haute { background: var(--vert-fond); color: var(--vert); }
+  .note-cv.moyenne { background: var(--accent-fond); color: var(--accent); }
+  .note-cv.basse { background: var(--fond); color: var(--doux); border: 1px solid var(--bord); }
+  .cv-ligne .manque { color: var(--orange); }
+  /* Vérification d'une lettre de motivation */
+  button.lien-bouton { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; font-size: 14px; }
+  #dialogue-lettre {
+    width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 32px); padding: 0;
+    border: 1px solid var(--bord); border-radius: 12px; background: var(--carte); color: var(--texte);
+  }
+  #dialogue-lettre::backdrop { background: rgba(10, 14, 22, .55); }
+  #dialogue-lettre .contenu { padding: 18px 20px; overflow-y: auto; max-height: calc(100vh - 34px); }
+  #dialogue-lettre h2 { margin: 0 0 4px; font-size: 18px; }
+  #dialogue-lettre .offre-visee { color: var(--doux); margin: 0 0 12px; font-size: 14px; }
+  #dialogue-lettre textarea {
+    width: 100%; min-height: 160px; padding: 8px 10px; margin-top: 8px; font: inherit; font-size: 14px;
+    border: 1px solid var(--bord); border-radius: 6px; background: var(--fond); color: var(--texte); resize: vertical;
+  }
+  #dialogue-lettre .actions { margin-top: 10px; }
+  #lettre-message { font-size: 14px; margin: 8px 0 0; }
+  #lettre-message.erreur { color: var(--rouge); }
+  .verifs { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 4px; font-size: 14px; }
+  .verifs .ok::before { content: "✓ "; color: var(--vert); font-weight: 700; }
+  .verifs .a-revoir::before { content: "✗ "; color: var(--rouge); font-weight: 700; }
+  #lettre-conseils { margin: 12px 0 0; padding-left: 20px; font-size: 14px; display: grid; gap: 6px; }
+  input[type="file"] { max-width: 100%; font-size: 14px; }
+  footer { max-width: 1280px; margin: 0 auto; padding: 0 24px 32px; color: var(--doux); font-size: 13px; }
+  .meta, .resume, article h3 { overflow-wrap: anywhere; }
+  @media (max-width: 860px) {
+    .page { grid-template-columns: 1fr; padding: 16px; gap: 16px; }
+    aside { position: static; padding: 12px 16px; }
+    header { padding: 16px; }
+    header h1 { font-size: 19px; }
+    #panneau > summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; }
+    #panneau > summary .ouvrir { display: inline; color: var(--accent); font-size: 14px; }
+    #panneau[open] > summary { margin-bottom: 12px; }
+    .barre { flex-direction: column; align-items: stretch; }
+    .actions > button { flex: 1; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Offres d'emploi et de stage en informatique au Québec</h1>
+  <p>{{NOMBRE}} offres · collecte du {{DATE}}{{NOUVEAUTES}} · Guichet-Emplois (et ses sites partenaires) et Remotive</p>
+</header>
+
+<div class="page">
+  <aside aria-labelledby="titre-filtres">
+   <details id="panneau" open>
+    <summary><h2 id="titre-filtres">Filtres</h2><span class="ouvrir" id="etat-filtres">afficher</span></summary>
+    <div class="champ">
+      <label for="q">Recherche</label>
+      <input type="search" id="q" placeholder="titre, employeur, technologie…" autocomplete="off">
+    </div>
+    <div class="champ">
+      <label for="region">Région</label>
+      <select id="region"><option value="">Toutes les régions</option></select>
+    </div>
+    <div class="champ">
+      <label for="ville">Ville</label>
+      <select id="ville"><option value="">Toutes les villes</option></select>
+    </div>
+    <div class="champ">
+      <label for="techno">Technologie</label>
+      <select id="techno"><option value="">Toutes</option></select>
+    </div>
+    <div class="champ">
+      <label for="niveau">Niveau</label>
+      <select id="niveau">
+        <option value="">Tous les niveaux</option>
+        <option value="débutant">Débutant</option>
+        <option value="intermédiaire">Intermédiaire</option>
+        <option value="avancé">Avancé</option>
+      </select>
+    </div>
+    <div class="champ">
+      <span class="titre-champ" id="titre-salaire">Salaire minimum</span>
+      <div class="ligne" role="group" aria-labelledby="titre-salaire">
+        <input type="number" id="salaire" min="0" step="1" placeholder="ex. 60000" aria-label="Montant minimum">
+        <select id="unite" aria-label="Unité du salaire">
+          <option value="année">par année</option>
+          <option value="heure">par heure</option>
+        </select>
+      </div>
+    </div>
+    <div class="champ">
+      <label class="case"><input type="checkbox" id="stages"> Stages seulement</label>
+      <label class="case" id="case-nouvelles" hidden><input type="checkbox" id="nouvelles"> Nouvelles offres seulement</label>
+      <label class="case"><input type="checkbox" id="avecSalaire"> Salaire indiqué</label>
+      <label class="case"><input type="checkbox" id="actives"> Cacher les offres expirées</label>
+    </div>
+    <div class="champ">
+      <label for="tri">Trier par</label>
+      <select id="tri">
+        <option value="recent">Plus récentes</option>
+        <option value="salaire">Salaire le plus élevé</option>
+        <option value="expire">Expire bientôt</option>
+        <option value="titre">Titre (A à Z)</option>
+        <option value="cv" id="tri-cv" hidden disabled>Correspondance avec mon CV</option>
+      </select>
+    </div>
+    <button type="button" id="effacer">Effacer les filtres</button>
+   </details>
+  </aside>
+
+  <main>
+    <section class="bloc-cv" aria-labelledby="titre-cv">
+      <details id="panneau-cv">
+        <summary><span id="titre-cv">Comparer les offres avec mon CV</span> <span class="discret">· le CV reste dans ce navigateur</span></summary>
+        <p class="aide">
+          Choisissez votre CV en Word (.docx) ou en texte (.txt), ou collez son texte. Rien n'est envoyé ni enregistré :
+          la comparaison se fait sur cet appareil, avec les mêmes règles que <code>main.py --cv</code>.
+          Pour un PDF, enregistrez d'abord le CV en .docx depuis Word.
+        </p>
+        <input type="file" id="cv-fichier" accept=".docx,.txt,.md" aria-label="Fichier du CV">
+        <textarea id="cv-texte" placeholder="… ou collez le texte de votre CV ici" aria-label="Texte du CV"></textarea>
+        <div class="actions">
+          <button type="button" id="cv-comparer" class="principal">Comparer avec mon CV</button>
+          <button type="button" id="cv-retirer" hidden>Retirer le CV</button>
+        </div>
+        <p id="cv-message" role="status" aria-live="polite"></p>
+        <div id="cv-profil" hidden></div>
+      </details>
+    </section>
+    <div class="barre">
+      <div id="compte" aria-live="polite" data-count="0"></div>
+      <div class="actions">
+        <button type="button" id="copier">Copier le lien de cette recherche</button>
+        <button type="button" id="exporter" class="principal">Exporter en CSV</button>
+      </div>
+    </div>
+    <div class="technos-populaires" id="populaires" aria-label="Technologies les plus demandées"></div>
+    <div class="liste" id="liste"></div>
+    <button type="button" id="plus" hidden>Afficher plus d'offres</button>
+  </main>
+</div>
+
+<dialog id="dialogue-lettre" aria-labelledby="titre-lettre">
+  <div class="contenu">
+    <h2 id="titre-lettre">Vérifier ma lettre de motivation</h2>
+    <p class="offre-visee" id="lettre-offre"></p>
+    <p class="aide">
+      Choisissez la lettre (.docx ou .txt) ou collez son texte. Elle reste dans ce navigateur : rien n'est envoyé ni enregistré.
+      La lettre n'est pas notée : la page repère ce qui peut être amélioré pour cette offre (mêmes règles que <code>main.py --lettre</code>).
+    </p>
+    <input type="file" id="lettre-fichier" accept=".docx,.txt,.md" aria-label="Fichier de la lettre">
+    <textarea id="lettre-texte" placeholder="… ou collez le texte de votre lettre ici" aria-label="Texte de la lettre"></textarea>
+    <div class="actions">
+      <button type="button" id="lettre-verifier" class="principal">Vérifier la lettre</button>
+      <button type="button" id="lettre-fermer">Fermer</button>
+    </div>
+    <p id="lettre-message" role="status" aria-live="polite"></p>
+    <ul class="verifs" id="lettre-verifs" hidden></ul>
+    <ul id="lettre-conseils" hidden></ul>
+  </div>
+</dialog>
+
+<footer>
+  Sources : <a href="https://www.guichetemplois.gc.ca/">Guichet-Emplois</a> (offres directes et partenaires : Jobillico, Québec emploi, Talent.com…),
+  <a href="https://remotive.com/">Remotive</a> (offres affichées avec leur lien d'origine; ne pas les republier ailleurs).
+  Régions : Répertoire des municipalités du Québec, MAMH (CC-BY 4.0).
+  Les informations absentes d'une offre ne sont pas devinées. Vérifiez toujours l'offre sur le site d'origine avant de postuler.
+</footer>
+
+<script type="application/json" id="regles">{{REGLES}}</script>
+<script>
+{{SCRIPT_CV}}
+</script>
+<script type="application/json" id="donnees">{{DONNEES}}</script>
+<script>
+"use strict";
+(function () {
+  const OFFRES = JSON.parse(document.getElementById("donnees").textContent);
+  const PAR_PAGE = 30;
+  const AUJOURDHUI = new Date();
+  AUJOURDHUI.setHours(0, 0, 0, 0);
+  const nombre = new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 2 });
+  const formatDate = new Intl.DateTimeFormat("fr-CA", { day: "numeric", month: "long", year: "numeric" });
+  const dateLisible = (iso) => { const d = new Date(iso + "T00:00:00"); return isNaN(d) ? iso : formatDate.format(d); };
+  const $ = (id) => document.getElementById(id);
+  const champs = ["q", "region", "ville", "techno", "niveau", "salaire", "unite", "stages", "nouvelles", "avecSalaire", "actives", "tri"];
+  let affichees = PAR_PAGE;
+
+  // Comparaison sans accents ni majuscules : « montreal » trouve « Montréal ».
+  const simple = (texte) => String(texte || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+  function joursAvant(dateIso) {
+    if (!dateIso) return null;
+    const d = new Date(dateIso + "T00:00:00");
+    if (isNaN(d)) return null;
+    return Math.round((d - AUJOURDHUI) / 86400000);
+  }
+
+  function compter(liste) {
+    const total = new Map();
+    for (const valeur of liste) if (valeur) total.set(valeur, (total.get(valeur) || 0) + 1);
+    return [...total.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "fr"));
+  }
+
+  function remplirListe(select, valeurs, avecCompte) {
+    const garde = select.value;
+    while (select.options.length > 1) select.remove(1);
+    for (const [valeur, n] of valeurs) {
+      const option = document.createElement("option");
+      option.value = valeur;
+      option.textContent = avecCompte ? `${valeur} (${n})` : valeur;
+      select.append(option);
+    }
+    select.value = [...select.options].some((o) => o.value === garde) ? garde : "";
+  }
+
+  function remplirVilles() {
+    const region = $("region").value;
+    const villes = OFFRES.filter((o) => !region || o.region === region).map((o) => o.ville);
+    remplirListe($("ville"), compter(villes), true);
+  }
+
+  // Lecture et écriture des filtres dans l'adresse (#region=…&techno=…) pour partager une recherche.
+  function lireAdresse() {
+    const params = new URLSearchParams(location.hash.slice(1));
+    for (const id of champs) {
+      if (!params.has(id)) continue;
+      const champ = $(id);
+      if (champ.type === "checkbox") champ.checked = params.get(id) === "1";
+      else champ.value = params.get(id);
+      if (id === "region") remplirVilles();
+    }
+  }
+
+  function ecrireAdresse() {
+    const params = new URLSearchParams();
+    for (const id of champs) {
+      const champ = $(id);
+      if (champ.type === "checkbox") { if (champ.checked) params.set(id, "1"); }
+      else if (champ.value && !(id === "tri" && (champ.value === "recent" || champ.value === "cv")) && !(id === "unite" && champ.value === "année")) params.set(id, champ.value);
+    }
+    const hash = params.toString();
+    history.replaceState(null, "", hash ? "#" + hash : location.pathname + location.search);
+  }
+
+  function filtrer() {
+    const q = simple($("q").value.trim());
+    const mots = q ? q.split(/\s+/) : [];
+    const region = $("region").value, ville = $("ville").value, techno = $("techno").value, niveau = $("niveau").value;
+    const salaire = parseFloat($("salaire").value), unite = $("unite").value;
+    const stages = $("stages").checked, nouvelles = $("nouvelles").checked, avecSalaire = $("avecSalaire").checked, actives = $("actives").checked;
+    return OFFRES.filter((o) => {
+      if (region && o.region !== region) return false;
+      if (ville && o.ville !== ville) return false;
+      if (techno && !o.technos.includes(techno)) return false;
+      if (niveau && o.niveau !== niveau) return false;
+      if (stages && !o.stage) return false;
+      if (nouvelles && !o.nouvelle) return false;
+      if (avecSalaire && o.salMin === null) return false;
+      if (!isNaN(salaire) && (o.salMin === null || o.unite !== unite || o.salMin < salaire)) return false;
+      if (actives) { const j = joursAvant(o.expire); if (j !== null && j < 0) return false; }
+      if (mots.length) {
+        const texte = simple([o.titre, o.titreCnp, o.employeur, o.ville, o.region, o.technos.join(" "), o.competences.join(" "), o.resume].join(" "));
+        if (!mots.every((m) => texte.includes(m))) return false;
+      }
+      return true;
+    });
+  }
+
+  function salaireAnnuel(o) { return o.unite === "année" && o.salMin !== null ? (o.salMax ?? o.salMin) : -1; }
+
+  // Résultats de la comparaison avec un CV (id de l'offre -> note, en commun, manque). Gardés en mémoire seulement.
+  let comparaison = null;
+  let profilCv = null;
+  const comparateur = creerComparateur(JSON.parse(document.getElementById("regles").textContent));
+
+  function trier(liste) {
+    const tri = $("tri").value;
+    const copie = [...liste];
+    if (tri === "cv" && comparaison) {
+      // Même ordre que main.py --cv : note, puis nombre de technologies en commun, puis titre.
+      const cle = (o) => comparaison.get(o.id);
+      copie.sort((a, b) => {
+        const ra = cle(a), rb = cle(b);
+        if (!ra || !rb) return (rb ? 1 : 0) - (ra ? 1 : 0);
+        return rb.note - ra.note || rb.communs.length - ra.communs.length || (a.titreTri < b.titreTri ? -1 : a.titreTri > b.titreTri ? 1 : 0);
+      });
+    } else if (tri === "salaire") copie.sort((a, b) => salaireAnnuel(b) - salaireAnnuel(a) || (b.unite === "heure" ? (b.salMax ?? b.salMin) : -1) - (a.unite === "heure" ? (a.salMax ?? a.salMin) : -1));
+    else if (tri === "expire") copie.sort((a, b) => (a.expire || "9999") .localeCompare(b.expire || "9999"));
+    else if (tri === "titre") copie.sort((a, b) => a.titre.localeCompare(b.titre, "fr"));
+    else copie.sort((a, b) => (b.publiee || "").localeCompare(a.publiee || ""));
+    return copie;
+  }
+
+  function texteSalaire(o) {
+    if (o.salMin === null) return "";
+    const montant = o.salMax !== null && o.salMax !== o.salMin
+      ? `${nombre.format(o.salMin)} $ à ${nombre.format(o.salMax)} $`
+      : `${nombre.format(o.salMin)} $`;
+    const unite = o.unite ? ` par ${o.unite}` : "";
+    return montant + unite;
+  }
+
+  function element(balise, classe, texte) {
+    const e = document.createElement(balise);
+    if (classe) e.className = classe;
+    if (texte !== undefined) e.textContent = texte;
+    return e;
+  }
+
+  function lienSur(url, texte) {
+    if (!/^https:\/\//.test(url || "")) return null;
+    const a = element("a", "", texte);
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    return a;
+  }
+
+  function carte(o) {
+    const art = element("article");
+    art.dataset.id = o.id;
+    const h3 = element("h3");
+    h3.append(lienSur(o.lien, o.titre) || document.createTextNode(o.titre));
+    art.append(h3);
+    if (o.titreCnp) art.append(element("div", "cnp", `Profession (CNP) : ${o.titreCnp}`));
+
+    const meta = element("div", "meta");
+    meta.append(element("strong", "", o.employeur || "Employeur non précisé"));
+    const lieu = o.ville ? o.ville + (o.region && o.region !== o.ville ? ` (${o.region})` : "") : (o.lieu || "Lieu non précisé");
+    meta.append(document.createTextNode(` · ${lieu}`));
+    if (o.publiee) meta.append(document.createTextNode(` · publiée le ${dateLisible(o.publiee)}`));
+    art.append(meta);
+
+    const badges = element("div", "badges");
+    if (o.nouvelle) badges.append(element("span", "badge nouvelle", "Nouvelle"));
+    if (o.stage) badges.append(element("span", "badge stage", o.stage));
+    if (o.niveau) badges.append(element("span", "badge", `Niveau ${o.niveau}`));
+    if (o.mode) badges.append(element("span", "badge", o.mode));
+    if (o.type) badges.append(element("span", "badge", o.type));
+    const jours = joursAvant(o.expire);
+    if (jours !== null) {
+      if (jours < 0) badges.append(element("span", "badge urgent", "Expirée"));
+      else if (jours <= 3) badges.append(element("span", "badge urgent", jours === 0 ? "Expire aujourd'hui" : `Expire dans ${jours} j`));
+      else if (jours <= 7) badges.append(element("span", "badge bientot", `Expire dans ${jours} j`));
+    }
+    if (badges.children.length) art.append(badges);
+
+    if (comparaison) {
+      const r = comparaison.get(o.id);
+      const ligne = element("div", "cv-ligne");
+      if (r) {
+        art.dataset.note = r.note;
+        const tete = element("div");
+        tete.append(element("span", `note-cv ${r.note >= 80 ? "haute" : r.note >= 60 ? "moyenne" : "basse"}`, `${r.note}/100`));
+        tete.append(document.createTextNode(`Correspondance avec mon CV · niveau ${r.niveau}${r.peuInfo ? " · peu d'information dans l'offre" : ""}`));
+        ligne.append(tete);
+        const communs = [...r.communs, ...r.communsCompetences];
+        ligne.append(element("div", "", `En commun : ${communs.length ? communs.join(", ") : "rien"}`));
+        if (r.manquants.length) ligne.append(element("div", "manque", `Demandé, absent du CV : ${r.manquants.join(", ")}`));
+      } else {
+        ligne.append(element("div", "", "Pas assez d'information dans l'offre pour la comparer avec le CV."));
+      }
+      art.append(ligne);
+    }
+
+    const salaire = texteSalaire(o);
+    if (salaire) {
+      const s = element("div", "salaire", salaire);
+      if (o.negocier) s.append(element("small", "", " · à négocier"));
+      art.append(s);
+    }
+    if (o.resume) art.append(element("p", "resume", o.resume));
+    if (o.technos.length) {
+      const t = element("div", "technos");
+      for (const nom of o.technos) t.append(element("span", "puce", nom));
+      art.append(t);
+    }
+
+    const details = [["Études", o.etudes], ["Expérience", o.experience], ["Langues", o.langues.join(", ")],
+      ["Compétences", o.competences.join(", ")], ["Expire le", o.expire ? dateLisible(o.expire) : ""], ["Publiée par", o.sites.join(", ")]]
+      .filter(([, v]) => v);
+    if (details.length) {
+      const d = element("details");
+      d.append(element("summary", "", "Plus de détails"));
+      const dl = element("dl");
+      for (const [nom, valeur] of details) { dl.append(element("dt", "", nom)); dl.append(element("dd", "", valeur)); }
+      d.append(dl);
+      art.append(d);
+    }
+
+    const liens = element("div", "liens");
+    const principal = lienSur(o.lien, o.sites[0] === "Remotive" ? "Voir l'offre sur Remotive" : "Voir l'offre sur le Guichet-Emplois");
+    if (principal) liens.append(principal);
+    const origine = lienSur(o.lienOrigine, `Annonce d'origine (${o.sites[0]})`);
+    if (origine) liens.append(origine);
+    const boutonLettre = element("button", "lien-bouton", "Vérifier ma lettre pour cette offre");
+    boutonLettre.type = "button";
+    boutonLettre.addEventListener("click", () => ouvrirLettre(o));
+    liens.append(boutonLettre);
+    if (liens.children.length) art.append(liens);
+    return art;
+  }
+
+  function afficherPopulaires(resultats) {
+    const zone = $("populaires");
+    zone.replaceChildren(element("span", "etiquette", "Technologies demandées :"));
+    const choisie = $("techno").value;
+    for (const [nom, n] of compter(resultats.flatMap((o) => o.technos)).slice(0, 12)) {
+      const b = element("button", "puce", `${nom} (${n})`);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(nom === choisie));
+      b.addEventListener("click", () => { $("techno").value = nom === choisie ? "" : nom; mettreAJour(true); });
+      zone.append(b);
+    }
+    if (zone.children.length === 1) zone.append(element("span", "etiquette", "aucune dans ces résultats"));
+  }
+
+  let resultatsCourants = [];
+
+  function mettreAJour(retourDebut) {
+    if (retourDebut) affichees = PAR_PAGE;
+    resultatsCourants = trier(filtrer());
+    const compte = $("compte");
+    compte.dataset.count = resultatsCourants.length;
+    compte.textContent = `${resultatsCourants.length} offre${resultatsCourants.length > 1 ? "s" : ""} sur ${OFFRES.length}`;
+    afficherPopulaires(resultatsCourants);
+    const liste = $("liste");
+    if (!resultatsCourants.length) {
+      liste.replaceChildren(element("div", "vide", "Aucune offre ne correspond à ces filtres. Essayez d'en retirer un."));
+    } else {
+      liste.replaceChildren(...resultatsCourants.slice(0, affichees).map(carte));
+    }
+    const reste = resultatsCourants.length - affichees;
+    $("plus").hidden = reste <= 0;
+    $("plus").textContent = `Afficher plus d'offres (${Math.max(reste, 0)} restantes)`;
+    ecrireAdresse();
+  }
+
+  function exporterCsv() {
+    const colonnes = [["titre", (o) => o.titre], ["profession_cnp", (o) => o.titreCnp], ["employeur", (o) => o.employeur],
+      ["ville", (o) => o.ville], ["region", (o) => o.region], ["salaire_min", (o) => o.salMin], ["salaire_max", (o) => o.salMax],
+      ["unite", (o) => o.unite], ["niveau", (o) => o.niveau], ["stage", (o) => o.stage], ["technologies", (o) => o.technos.join(", ")],
+      ["publiee_le", (o) => o.publiee], ["expire_le", (o) => o.expire], ["lien", (o) => o.lien], ["lien_origine", (o) => o.lienOrigine]];
+    if (comparaison) {
+      colonnes.splice(1, 0,
+        ["note_cv", (o) => comparaison.get(o.id)?.note ?? ""],
+        ["en_commun_avec_cv", (o) => { const r = comparaison.get(o.id); return r ? [...r.communs, ...r.communsCompetences].join(", ") : ""; }],
+        ["absent_du_cv", (o) => comparaison.get(o.id)?.manquants.join(", ") ?? ""]);
+    }
+    const cellule = (v) => {
+      let t = v === null || v === undefined ? "" : String(v);
+      if (typeof v === "number") t = t.replace(".", ",");
+      return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    };
+    const lignes = [colonnes.map(([nom]) => nom).join(";")]
+      .concat(resultatsCourants.map((o) => colonnes.map(([, f]) => cellule(f(o))).join(";")));
+    const bom = String.fromCharCode(0xFEFF); // pour qu'Excel lise les accents
+    const blob = new Blob([bom + lignes.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "offres-filtrees.csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  // --- Comparaison avec un CV -------------------------------------------------
+  function messageCv(texte, erreur) {
+    $("cv-message").textContent = texte;
+    $("cv-message").className = erreur ? "erreur" : "";
+  }
+
+  async function lireFichierCv(fichier) {
+    const nom = fichier.name.toLowerCase();
+    if (nom.endsWith(".docx")) return texteDocx(new Uint8Array(await fichier.arrayBuffer()));
+    if (nom.endsWith(".txt") || nom.endsWith(".md")) {
+      const octets = new Uint8Array(await fichier.arrayBuffer());
+      try { return new TextDecoder("utf-8", { fatal: true }).decode(octets); }
+      catch { return new TextDecoder("windows-1252").decode(octets); } // fichier enregistré en ANSI
+    }
+    throw new Error("Format non pris en charge. Enregistrez le document en .docx (Word) ou en .txt.");
+  }
+
+  function afficherProfil(p, resultats, sansInfo) {
+    const zone = $("cv-profil");
+    const ligne = (titre, valeur) => { const d = element("div"); d.append(element("b", "", titre + " : ")); d.append(document.createTextNode(valeur)); return d; };
+    const exp = p.annees === null ? "non précisée" : `${String(p.annees).replace(".", ",")} an(s), niveau ${p.niveau}`;
+    const lignes = [
+      ligne("Technologies trouvées", p.technos.join(", ") || "aucune (écrivez-les clairement, ex. « Langages : Python, SQL »)"),
+      ligne("Compétences", p.competences.join(", ") || "aucune"),
+      ligne("Expérience", exp),
+      ligne("Langues", p.langues.join(", ") || "non précisées"),
+      ligne("Cherche un stage", p.chercheStage ? "oui" : "non"),
+      ligne("Offres comparées", `${resultats.length}, et ${sansInfo} sans technologie ni compétence listée`),
+    ];
+    if (p.chercheStage) {
+      const stages = resultats.map((r, i) => [i + 1, r]).filter(([, r]) => r.offre.stage);
+      lignes.push(ligne("Stages dans le classement", stages.length ? stages.map(([rang, r]) => `n° ${rang} ${r.offre.titre}`).join("; ") : "aucun parmi ces offres"));
+    }
+    zone.replaceChildren(...lignes);
+    zone.hidden = false;
+  }
+
+  async function comparerCv() {
+    try {
+      const fichier = $("cv-fichier").files[0];
+      const texte = fichier ? await lireFichierCv(fichier) : $("cv-texte").value;
+      if (!texte.trim()) { messageCv("Choisissez un fichier ou collez le texte du CV.", true); return; }
+      profilCv = comparateur.profil(texte);
+      const { resultats, sansInfo } = comparateur.classer(profilCv, OFFRES);
+      comparaison = new Map(resultats.map((r) => [r.offre.id, r]));
+      afficherProfil(profilCv, resultats, sansInfo);
+      $("tri-cv").hidden = false; $("tri-cv").disabled = false; $("tri").value = "cv";
+      $("cv-retirer").hidden = false;
+      messageCv("Les offres sont classées selon votre CV. La note vient de règles simples : lisez toujours l'offre complète.");
+      mettreAJour(true);
+    } catch (erreur) {
+      messageCv(erreur.message, true);
+    }
+  }
+
+  function retirerCv() {
+    comparaison = null; profilCv = null;
+    $("cv-fichier").value = ""; $("cv-texte").value = "";
+    $("cv-profil").hidden = true; $("cv-profil").replaceChildren();
+    if ($("tri").value === "cv") $("tri").value = "recent";
+    $("tri-cv").hidden = true; $("tri-cv").disabled = true;
+    $("cv-retirer").hidden = true;
+    messageCv("CV retiré.");
+    mettreAJour(true);
+  }
+
+  $("cv-comparer").addEventListener("click", comparerCv);
+  $("cv-retirer").addEventListener("click", retirerCv);
+
+  // --- Vérification d'une lettre de motivation -----------------------------------
+  const reglesLettre = JSON.parse(document.getElementById("regles").textContent);
+  const verificateur = creerVerificateurLettre(reglesLettre);
+  const { motsMin, motsMax } = reglesLettre.lettre;
+  let offreLettre = null;
+
+  function messageLettre(texte, erreur) {
+    $("lettre-message").textContent = texte;
+    $("lettre-message").className = erreur ? "erreur" : "";
+  }
+
+  function ouvrirLettre(o) {
+    offreLettre = o;
+    $("lettre-offre").textContent = `Offre : ${o.titre} · ${o.employeur || "employeur non précisé"}`;
+    $("lettre-verifs").hidden = true; $("lettre-conseils").hidden = true;
+    messageLettre("");
+    $("dialogue-lettre").showModal(); // la lettre déjà collée est gardée pour essayer une autre offre
+  }
+
+  async function verifierLettre() {
+    try {
+      const fichier = $("lettre-fichier").files[0];
+      const texte = fichier ? await lireFichierCv(fichier) : $("lettre-texte").value;
+      if (!texte.trim()) { messageLettre("Choisissez un fichier ou collez le texte de la lettre.", true); return; }
+      if (fichier) { $("lettre-texte").value = texte; $("lettre-fichier").value = ""; } // on peut ensuite retoucher le texte
+      const v = verificateur.verifier(texte, offreLettre);
+      const conseils = verificateur.suggestions(v, offreLettre, profilCv ? profilCv.technos : null);
+      const point = (ok, texteOk, texteNon) => element("li", ok ? "ok" : "a-revoir", ok ? texteOk : texteNon);
+      const verifs = [
+        point(!v.zones.length, "Aucune zone à remplir oubliée", `Zones à remplir oubliées : ${v.zones.join(", ")}`),
+        v.employeurCite === null
+          ? element("li", "", "Employeur non précisé dans l'offre")
+          : point(v.employeurCite, "Employeur cité", "Employeur non cité"),
+        point(v.posteCite, "Poste cité", "Poste non cité"),
+        point(!v.technosAbsentes.length, "Toutes les technologies de l'offre sont citées",
+          `Technologies de l'offre citées : ${v.technosCitees.join(", ") || "aucune"} · absentes : ${v.technosAbsentes.join(", ")}`),
+        point(v.nbMots >= motsMin && v.nbMots <= motsMax, `Longueur : ${v.nbMots} mots`, `Longueur : ${v.nbMots} mots (viser ${motsMin} à ${motsMax})`),
+      ];
+      $("lettre-verifs").replaceChildren(...verifs);
+      $("lettre-conseils").replaceChildren(...(conseils.length ? conseils : ["Rien à signaler avec ces règles. Relisez quand même l'offre complète."])
+        .map((t) => element("li", "", t)));
+      $("lettre-verifs").hidden = false; $("lettre-conseils").hidden = false;
+      messageLettre(profilCv ? "Suggestions faites avec votre CV chargé dans la page." : "Astuce : chargez aussi votre CV pour des suggestions plus précises.");
+    } catch (erreur) {
+      messageLettre(erreur.message, true);
+    }
+  }
+
+  $("lettre-verifier").addEventListener("click", verifierLettre);
+  $("lettre-fermer").addEventListener("click", () => $("dialogue-lettre").close());
+  $("lettre-fichier").addEventListener("change", () => messageLettre(""));
+
+  // Sur téléphone, les filtres sont repliés au départ pour voir tout de suite les offres.
+  const petitEcran = window.matchMedia("(max-width: 860px)");
+  const panneau = $("panneau");
+  const majEtatPanneau = () => { $("etat-filtres").textContent = panneau.open ? "masquer" : "afficher"; };
+  if (petitEcran.matches) panneau.open = false;
+  panneau.addEventListener("toggle", majEtatPanneau);
+  // Sur grand écran, le panneau reste toujours ouvert.
+  panneau.querySelector("summary").addEventListener("click", (e) => { if (!petitEcran.matches) e.preventDefault(); });
+  majEtatPanneau();
+
+  // Remplissage des listes à partir des offres réellement présentes.
+  remplirListe($("region"), compter(OFFRES.map((o) => o.region)), true);
+  remplirVilles();
+  remplirListe($("techno"), compter(OFFRES.flatMap((o) => o.technos)), true);
+  // La case « Nouvelles offres seulement » n'apparaît que s'il y a des nouveautés depuis la collecte précédente.
+  $("case-nouvelles").hidden = !OFFRES.some((o) => o.nouvelle);
+  lireAdresse();
+
+  for (const id of champs) {
+    $(id).addEventListener(id === "q" || id === "salaire" ? "input" : "change", () => {
+      if (id === "region") remplirVilles();
+      mettreAJour(true);
+    });
+  }
+  $("effacer").addEventListener("click", () => {
+    for (const id of champs) { const c = $(id); if (c.type === "checkbox") c.checked = false; else c.value = ""; }
+    $("tri").value = comparaison ? "cv" : "recent"; $("unite").value = "année";
+    remplirVilles();
+    mettreAJour(true);
+  });
+  $("plus").addEventListener("click", () => { affichees += PAR_PAGE; mettreAJour(false); });
+  $("exporter").addEventListener("click", exporterCsv);
+  $("copier").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(location.href); $("copier").textContent = "Lien copié ✓"; }
+    catch { $("copier").textContent = "Copiez l'adresse de la page"; }
+    setTimeout(() => { $("copier").textContent = "Copier le lien de cette recherche"; }, 2000);
+  });
+  window.addEventListener("hashchange", () => { lireAdresse(); mettreAJour(true); });
+  mettreAJour(true);
+})();
+</script>
+</body>
+</html>
