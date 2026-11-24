@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 206 tests`. Deux tests comparent la page avec Python à l'aide de Node.js, l'un pour le CV et l'autre pour la lettre. Si Node.js n'est pas installé, ces deux tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 209 tests`. Deux tests comparent la page avec Python à l'aide de Node.js, l'un pour le CV et l'autre pour la lettre. Si Node.js n'est pas installé, ces deux tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -64,12 +64,13 @@ python main.py --depuis offres.json    # recrée seulement la page, sans nouvell
 
 Dans la page :
 
-- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées.
+- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées, description complète seulement.
 - **Tri** : plus récentes, salaire le plus élevé, expire bientôt, titre.
 - **Technologies demandées** : un clic sur une technologie filtre les offres.
 - **Chaque offre** affiche le titre de l'employeur, le salaire, le niveau, les badges (« Stage », « Expire dans 3 j »…), un résumé, les technologies et « Plus de détails » (études, expérience, langues). Elle donne aussi le lien vers l'offre et vers l'annonce d'origine.
 - **Annonces semblables** : quand un employeur publie le même poste plusieurs fois (même titre, même site), la page montre une seule carte avec « 3 annonces ». Les autres annonces sont listées sur la carte, avec leur ville, leur date et leur lien. Un poste republié alors qu'il était déjà en ligne a le badge « Republiée » au lieu de « Nouvelle ».
-- **« Exporter en CSV »** enregistre les offres affichées pour Excel (une ligne par annonce).
+- **Offres sans description** : pour les offres de Québec emploi, Talent.com, Indeed et ZipRecruiter, le Guichet-Emplois ne donne ni les tâches ni les exigences. La carte le dit dans un encadré orange, et le lien « Lire l'offre complète sur … » est mis en gras. La case « Description complète seulement » les cache, mais elle n'est pas cochée par défaut : le seul stage confirmé de la collecte du 24 novembre est une de ces offres.
+- **« Exporter en CSV »** enregistre les offres affichées pour Excel (une ligne par annonce, avec une colonne `description_complete`).
 - **« Copier le lien de cette recherche »** garde les filtres dans l'adresse de la page. Par exemple, `offres.html#region=Estrie&techno=SQL` rouvre la page avec ces filtres.
 - La page s'adapte au téléphone (filtres repliables) et au mode sombre.
 - **« Comparer les offres avec mon CV »** (en haut des résultats) :
@@ -325,7 +326,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (206 tests)
+# Tests hors ligne (209 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -352,7 +353,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 206 |
+| Tests hors ligne | 33 | 209 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -517,6 +518,26 @@ Ce qui a été ajouté :
 - en haut de la page : « 14 nouvelles offres depuis la collecte du 23 novembre 2026 (et 3 annonces republiées) ». Le filtre « Nouvelles offres seulement » donne aussi 14 offres.
 
 Vérifié dans Edge avec la vraie collecte : la recherche « mortgage » donne 1 offre (3 annonces), avec Montréal et Laval listées sur la carte. Les 9 nouveaux tests (`test_semblables.py`) couvrent le cas de Recrute Action, les accents et la ponctuation dans les titres, un autre employeur ou un autre site (pas regroupés), un employeur absent (jamais regroupé) et le compte des nouvelles offres.
+
+### Vérification des offres sans description (24 novembre)
+
+Essai sur la collecte du 24 novembre : 43 offres sur 183 (23 %) n'ont pas de description.
+
+| Site d'origine | Sans description |
+|---|---|
+| Québec emploi | 24 sur 25 |
+| Talent.com | 15 sur 21 |
+| indeed.com | 3 sur 4 |
+| ZipRecruiter | 1 sur 1 |
+| Guichet-Emplois, Jobillico, JobsMedia.ca, Remotive | 0 |
+
+- Dans les fiches en cache, ces offres n'ont que le titre, l'employeur, le lieu, le salaire, les dates et le lien « Voir l'offre d'emploi complète sur … ». Il n'y a pas d'autre texte à lire sur le Guichet-Emplois.
+- Aller chercher le texte chez le partenaire n'est pas permis : les conditions d'utilisation de Québec emploi l'interdisent (voir les limites), comme les règles des autres sites.
+- Elles ont quand même un salaire (43 sur 43), un lien d'origine (43 sur 43) et parfois un niveau (17 sur 43). Le seul stage confirmé (« Stagiaire en développement informatique », Revenu Québec) en fait partie.
+
+Ce qui a été ajouté : l'encadré sur la carte, la case « Description complète seulement », la colonne `description_complete` dans l'export CSV de la page, et la ligne « Sans description (détail seulement sur le site d'origine) : 43 {'Québec emploi': 24, …} » dans le résumé du terminal.
+
+Vérifié dans Edge avec la vraie collecte : 172 offres sans filtre, 132 offres (140 annonces) avec la case cochée. La carte du stage de Revenu Québec affiche l'encadré et le lien vers Québec emploi. Les 3 nouveaux tests (`test_sans_description.py`) vérifient aussi qu'une description faite seulement d'espaces compte comme absente.
 
 ### Ce que les données montrent (17 novembre)
 

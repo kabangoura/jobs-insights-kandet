@@ -216,6 +216,9 @@ def print_summary(summary: dict[str, object]) -> None:
     print(f"Sites d'origine (Guichet-Emplois) : {summary['guichet_by_origin_site']}")
     print(f"Champs remplis : {summary['filled_fields']}")
     print(f"Offres publiées sur plusieurs sites (fusionnées) : {summary['merged_offers']}")
+    without = summary["without_description_by_site"]
+    if without:
+        print(f"Sans description (détail seulement sur le site d'origine) : {sum(without.values())} {without}")
     print(f"Stages : {summary['stage_classification']}")
     print(f"Niveaux : {summary['levels']}")
     print(f"Top technologies : {summary['top_technologies']}")

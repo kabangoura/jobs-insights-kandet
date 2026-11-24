@@ -382,6 +382,10 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - essai d'abord : 10 groupes (21 annonces) sur 183 avec le même titre, le même employeur et le même site, dont 3 postes republiés comptés à tort comme nouveaux ;
   - ajout ensuite : `semblables.py`, une carte par poste dans `offres.html` avec la liste des autres annonces, badge « Republiée », en-tête « 172 offres (183 annonces) » ;
   - 9 nouveaux tests dans `test_semblables.py` ; au total, 206 tests OK.
+- **Offres sans description ✅ (24 novembre)** :
+  - essai d'abord : 43 offres sur 183 sans description (Québec emploi 24, Talent.com 15, Indeed 3, ZipRecruiter 1). Le Guichet-Emplois n'a pas d'autre texte pour elles, et le seul stage confirmé en fait partie ;
+  - ajout ensuite : encadré sur la carte, lien « Lire l'offre complète sur … » en gras, case « Description complète seulement » (non cochée par défaut), colonne `description_complete` dans le CSV de la page, ligne dans le résumé du terminal ;
+  - 3 nouveaux tests dans `test_sans_description.py` ; au total, 209 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Score de pertinence pour un étudiant du DEC** : règles simples et affichées (stage, niveau débutant, technologies vues au cours). Le score doit être expliqué, pas une note magique.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.

@@ -117,6 +117,15 @@ def build_summary(offers: list[AggregatedOffer], today: date | None = None) -> d
             ).most_common()
         ),
         "merged_offers": sum(len(offer.source_records) > 1 for offer in offers),
+        # Offres des partenaires dont le Guichet-Emplois n'affiche pas la description : le détail
+        # (tâches, exigences) est seulement sur le site d'origine, accessible par le lien.
+        "without_description_by_site": dict(
+            Counter(
+                (offer.source_records[0].origin_site or offer.source_records[0].source) if offer.source_records else "Non précisé"
+                for offer in offers
+                if not offer.description.strip()
+            ).most_common()
+        ),
         "stage_classification": dict(Counter(offer.stage_status for offer in offers)),
         "work_mode": dict(Counter(offer.work_mode or "Non précisé" for offer in offers)),
         "with_salary": sum(bool(offer.salary) for offer in offers),

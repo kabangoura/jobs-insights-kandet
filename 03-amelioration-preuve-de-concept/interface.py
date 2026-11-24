@@ -71,7 +71,7 @@ def offer_to_row(offer: AggregatedOffer, number: int) -> dict[str, object]:
         # Pour la vérification d'une lettre (mêmes données que lettre.py)
         "titreEmployeur": offer.original_title,
         "taches": offer.tasks,
-        "aDescription": bool(offer.description),
+        "aDescription": bool(offer.description.strip()),
         "nouvelle": offer.new_since_previous,
         "employeur": offer.employer,
         "ville": offer.city,

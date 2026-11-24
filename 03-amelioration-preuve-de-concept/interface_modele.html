@@ -163,6 +163,8 @@
   details dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 8px 0 0; }
   details dt { color: var(--doux); }
   details dd { margin: 0; }
+  .sans-description { margin: 8px 0 0; font-size: 14px; color: var(--orange); background: var(--orange-fond); padding: 6px 10px; border-radius: 6px; }
+  .liens a.important { font-weight: 600; }
   .semblables { margin-top: 8px; font-size: 14px; color: var(--doux); }
   .semblables ul { margin: 4px 0 0; padding-left: 20px; }
   #compte small.annonces { font-weight: 400; color: var(--doux); font-size: 14px; }
@@ -277,6 +279,7 @@
       <label class="case" id="case-nouvelles" hidden><input type="checkbox" id="nouvelles"> Nouvelles offres seulement</label>
       <label class="case"><input type="checkbox" id="avecSalaire"> Salaire indiqué</label>
       <label class="case"><input type="checkbox" id="actives"> Cacher les offres expirées</label>
+      <label class="case"><input type="checkbox" id="avecDescription"> Description complète seulement</label>
     </div>
     <div class="champ">
       <label for="tri">Trier par</label>
@@ -367,7 +370,7 @@
   const formatDate = new Intl.DateTimeFormat("fr-CA", { day: "numeric", month: "long", year: "numeric" });
   const dateLisible = (iso) => { const d = new Date(iso + "T00:00:00"); return isNaN(d) ? iso : formatDate.format(d); };
   const $ = (id) => document.getElementById(id);
-  const champs = ["q", "region", "ville", "techno", "niveau", "salaire", "unite", "stages", "nouvelles", "avecSalaire", "actives", "tri"];
+  const champs = ["q", "region", "ville", "techno", "niveau", "salaire", "unite", "stages", "nouvelles", "avecSalaire", "actives", "avecDescription", "tri"];
   let affichees = PAR_PAGE;
 
   // Comparaison sans accents ni majuscules : « montreal » trouve « Montréal ».
@@ -433,6 +436,7 @@
     const region = $("region").value, ville = $("ville").value, techno = $("techno").value, niveau = $("niveau").value;
     const salaire = parseFloat($("salaire").value), unite = $("unite").value;
     const stages = $("stages").checked, nouvelles = $("nouvelles").checked, avecSalaire = $("avecSalaire").checked, actives = $("actives").checked;
+    const avecDescription = $("avecDescription").checked;
     return OFFRES.filter((o) => {
       if (region && o.region !== region) return false;
       if (ville && o.ville !== ville) return false;
@@ -442,6 +446,7 @@
       if (nouvelles && (!o.nouvelle || o.republiee)) return false;
       if (avecSalaire && o.salMin === null) return false;
       if (!isNaN(salaire) && (o.salMin === null || o.unite !== unite || o.salMin < salaire)) return false;
+      if (avecDescription && !o.aDescription) return false;
       if (actives) { const j = joursAvant(o.expire); if (j !== null && j < 0) return false; }
       if (mots.length) {
         const texte = simple([o.titre, o.titreCnp, o.employeur, o.ville, o.region, o.technos.join(" "), o.competences.join(" "), o.resume].join(" "));
@@ -568,6 +573,12 @@
       art.append(s);
     }
     if (o.resume) art.append(element("p", "resume", o.resume));
+    // Offres des partenaires (Québec emploi, Talent.com, Indeed…) : le Guichet-Emplois ne donne que le titre,
+    // le lieu, le salaire et les dates. Le reste est seulement sur le site d'origine.
+    if (!o.aDescription) {
+      art.append(element("p", "sans-description",
+        `Pas de description sur le Guichet-Emplois : les tâches et les exigences sont seulement sur ${o.lienOrigine ? o.sites[0] : "le site d'origine"}.`));
+    }
     if (o.technos.length) {
       const t = element("div", "technos");
       for (const nom of o.technos) t.append(element("span", "puce", nom));
@@ -602,7 +613,8 @@
     const liens = element("div", "liens");
     const principal = lienSur(o.lien, o.sites[0] === "Remotive" ? "Voir l'offre sur Remotive" : "Voir l'offre sur le Guichet-Emplois");
     if (principal) liens.append(principal);
-    const origine = lienSur(o.lienOrigine, `Annonce d'origine (${o.sites[0]})`);
+    const origine = lienSur(o.lienOrigine, o.aDescription ? `Annonce d'origine (${o.sites[0]})` : `Lire l'offre complète sur ${o.sites[0]}`);
+    if (origine && !o.aDescription) origine.classList.add("important");
     if (origine) liens.append(origine);
     const boutonLettre = element("button", "lien-bouton", "Vérifier ma lettre pour cette offre");
     boutonLettre.type = "button";
@@ -668,7 +680,7 @@
     const colonnes = [["titre", (o) => o.titre], ["profession_cnp", (o) => o.titreCnp], ["employeur", (o) => o.employeur],
       ["ville", (o) => o.ville], ["region", (o) => o.region], ["salaire_min", (o) => o.salMin], ["salaire_max", (o) => o.salMax],
       ["unite", (o) => o.unite], ["niveau", (o) => o.niveau], ["stage", (o) => o.stage], ["technologies", (o) => o.technos.join(", ")],
-      ["publiee_le", (o) => o.publiee], ["expire_le", (o) => o.expire], ["lien", (o) => o.lien], ["lien_origine", (o) => o.lienOrigine]];
+      ["description_complete", (o) => (o.aDescription ? "oui" : "non")], ["publiee_le", (o) => o.publiee], ["expire_le", (o) => o.expire], ["lien", (o) => o.lien], ["lien_origine", (o) => o.lienOrigine]];
     if (comparaison) {
       colonnes.splice(1, 0,
         ["note_cv", (o) => comparaison.get(o.id)?.note ?? ""],
