@@ -60,6 +60,7 @@
   }
   header h1 { margin: 0; font-size: 22px; }
   header p { margin: 4px 0 0; color: var(--doux); }
+  header p.creation { font-size: 13px; }
   .page {
     display: grid;
     grid-template-columns: 290px 1fr;
@@ -226,6 +227,7 @@
 <header>
   <h1>Offres d'emploi et de stage en informatique au Québec</h1>
   <p>{{NOMBRE}} offres · collecte du {{DATE}}{{NOUVEAUTES}} · Guichet-Emplois (et ses sites partenaires) et Remotive</p>
+  <p class="creation">{{CREATION}} · relancez <code>python main.py</code> pour une nouvelle collecte, puis rafraîchissez cette page (F5)</p>
 </header>
 
 <div class="page">

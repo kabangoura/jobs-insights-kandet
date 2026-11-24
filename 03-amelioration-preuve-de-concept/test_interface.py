@@ -111,7 +111,7 @@ class MainHtmlTests(CollecteSimulee, unittest.TestCase):
             page = page_path.read_text(encoding="utf-8")
 
         rows = embedded_rows(page)
-        self.assertIn("Page à ouvrir dans le navigateur", text)
+        self.assertIn("Page mise à jour", text)
         self.assertEqual([row["titre"] for row in rows], ["Software Engineer Intern"])
         self.assertEqual(rows[0]["stage"], "Stage")
 
@@ -122,6 +122,50 @@ class MainHtmlTests(CollecteSimulee, unittest.TestCase):
             self.run_offline("--depuis", str(result_path), "--html", str(page_path))
             rows = embedded_rows(page_path.read_text(encoding="utf-8"))
         self.assertEqual(len(rows), 5)
+
+
+class PageAlwaysUpToDateTests(CollecteSimulee, unittest.TestCase):
+    """La page offres.html est recréée à chaque lancement de main.py (remarques du 24 novembre)."""
+
+    def test_collection_creates_the_page_next_to_offres_json(self) -> None:
+        with TemporaryDirectory() as folder:
+            self.collect_into(folder)  # sans --html
+            page = (Path(folder) / "offres.html").read_text(encoding="utf-8")
+        self.assertEqual(len(embedded_rows(page)), 5)
+        self.assertRegex(page, r"page créée le \d{1,2} \w+ \d{4} à \d{1,2} h \d{2}")
+
+    def test_deleted_page_is_created_again(self) -> None:
+        with TemporaryDirectory() as folder:
+            result_path = self.collect_into(folder)
+            page_path = Path(folder) / "offres.html"
+            page_path.unlink()
+            self.run_offline("--depuis", str(result_path))
+            self.assertTrue(page_path.exists())
+
+    def test_page_follows_the_latest_offres_json(self) -> None:
+        with TemporaryDirectory() as folder:
+            result_path = self.collect_into(folder)
+            # Une autre collecte remplace offres.json : la page doit suivre au prochain lancement.
+            document = json.loads(result_path.read_text(encoding="utf-8"))
+            document["offers"] = document["offers"][:2]
+            result_path.write_text(json.dumps(document), encoding="utf-8")
+            self.run_offline("--depuis", str(result_path), "--techno", "python")
+            rows = embedded_rows((Path(folder) / "offres.html").read_text(encoding="utf-8"))
+        self.assertEqual(len(rows), 2)  # toutes les offres du nouveau fichier, pas seulement le filtre
+
+    def test_page_can_be_skipped(self) -> None:
+        with TemporaryDirectory() as folder:
+            result_path = self.collect_into(folder)
+            page_path = Path(folder) / "offres.html"
+            page_path.unlink()
+            text = self.run_offline("--depuis", str(result_path), "--sans-html")
+            self.assertFalse(page_path.exists())
+        self.assertNotIn("Page mise à jour", text)
+
+    def test_creation_time_text(self) -> None:
+        from datetime import datetime
+        from interface import page_created_text
+        self.assertEqual(page_created_text(datetime(2026, 11, 24, 9, 5)), "page créée le 24 novembre 2026 à 9 h 05")
 
 
 if __name__ == "__main__":

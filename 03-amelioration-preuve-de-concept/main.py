@@ -166,15 +166,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--html",
         type=Path,
         nargs="?",
-        const=DOSSIER / "offres.html",
-        help="Créer une page à ouvrir dans le navigateur pour chercher les offres (défaut : offres.html).",
+        const=True,
+        help="Page avec seulement les offres filtrées (défaut : offres.html, à côté de offres.json). "
+             "Sans cette option, offres.html est quand même recréée à chaque lancement, avec toutes les offres.",
+    )
+    sorties.add_argument(
+        "--sans-html",
+        action="store_true",
+        help="Ne pas recréer offres.html.",
     )
     sorties.add_argument(
         "--echantillon",
         type=Path,
         help="Écrit aussi un petit fichier avec les 10 premières offres du Guichet-Emplois.",
     )
-    sorties.add_argument("--sans-sauvegarde", action="store_true", help="Ne pas écrire offres.json.")
+    sorties.add_argument(
+        "--sans-sauvegarde",
+        action="store_true",
+        help="Ne pas écrire offres.json (ni recréer offres.html, sauf avec --html).",
+    )
     sorties.add_argument(
         "--nettoyer-cache",
         action="store_true",
@@ -534,9 +544,17 @@ def main(argv: list[str] | None = None) -> None:
     if args.csv:
         write_csv(selected, args.csv)
         print(f"CSV pour Excel enregistré dans : {args.csv} ({len(selected)} offres)")
-    if args.html:
-        write_html(selected, args.html, generated_on=collection_date, changes_text=changes_text)
-        print(f"Page à ouvrir dans le navigateur : {args.html} ({len(selected)} offres)")
+    # La page est recréée à chaque lancement, à côté du offres.json utilisé : il suffit
+    # de rafraîchir le navigateur (F5) pour voir la dernière collecte.
+    default_page = (args.depuis.parent if args.depuis else args.sortie.parent) / "offres.html"
+    page, page_offers = None, offers
+    if args.html is not None:
+        page, page_offers = (default_page if args.html is True else args.html), selected
+    elif not args.sans_html and not args.sans_sauvegarde:
+        page = default_page
+    if page is not None:
+        write_html(page_offers, page, generated_on=collection_date, changes_text=changes_text)
+        print(f"Page mise à jour : {page} ({len(page_offers)} offres). Rafraîchissez le navigateur (F5) si elle est déjà ouverte.")
 
 
 if __name__ == "__main__":

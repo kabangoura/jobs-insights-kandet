@@ -373,6 +373,11 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
 - **README d'accueil ✅ (20 novembre)** : `equipe/kandet/README.md`, avec 3 commandes pour essayer, le contenu du dossier et les règles suivies.
 - **Format commun ✅ (20 novembre)** : dossier à part `equipe/kandet/format-commun/` (`convertir.py`, 10 tests). Il convertit `offres.json` au modèle `JobOffer` de Gregory. Les 195 offres sont acceptées telles quelles par son modèle, et rien n'est deviné (province et pays « Non spécifié » pour Remotive).
 - **Jobboom ❌ (vérifié le 20 novembre)** : le `robots.txt` le permet, mais les conditions d'utilisation interdisent de copier, reproduire ou publier les informations du site. Non ajouté.
+- **Dépôt personnel ✅ (24 novembre)** : mon dossier est copié dans mon propre dépôt `jobs-insights-kandet`. Le dépôt commun garde mon dossier tel qu'il était le 20 novembre.
+- **Page toujours à jour ✅ (24 novembre)** :
+  - problème constaté : après `python main.py`, la page ouverte ne changeait pas, et une page supprimée n'était pas recréée (elle n'était faite qu'avec `--html`) ;
+  - correction : `main.py` recrée `offres.html` à chaque lancement, à côté de `offres.json`, avec toutes les offres. « page créée le … à … » s'affiche en haut. `--html` garde seulement les offres filtrées, `--sans-html` ne fait pas la page ;
+  - 5 nouveaux tests dans `test_interface.py` ; au total, 197 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Score de pertinence pour un étudiant du DEC** : règles simples et affichées (stage, niveau débutant, technologies vues au cours). Le score doit être expliqué, pas une note magique.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.
@@ -380,7 +385,7 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
 
 ## Règles que je garde
 
-- Je travaille seulement dans `equipe/kandet/`. Les autres dossiers sont lus, jamais modifiés.
+- Je travaille seulement dans mon dépôt `jobs-insights-kandet`. Le dépôt commun et les dossiers des autres sont lus, jamais modifiés.
 - Bibliothèque standard seulement, tests sans réseau, 5 s entre les requêtes au Guichet-Emplois, 4 appels par jour au plus à Remotive.
 - Un champ absent reste vide, il n'est jamais deviné.
 - Les fichiers de cache et `offres.json` ne vont pas dans Git.

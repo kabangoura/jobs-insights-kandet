@@ -6,7 +6,7 @@ programme JavaScript fait la recherche, les filtres, le tri et l'export CSV.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 import html
 import json
 from pathlib import Path
@@ -104,6 +104,12 @@ def _json_for_html(rows: object) -> str:
     return json.dumps(rows, ensure_ascii=False).replace("</", "<\\/")
 
 
+def page_created_text(moment: datetime | None = None) -> str:
+    """« page créée le 24 novembre 2026 à 17 h 40 » : on voit tout de suite si la page est à jour."""
+    moment = moment or datetime.now()
+    return f"page créée le {french_date(moment.date().isoformat())} à {moment.hour} h {moment.minute:02d}"
+
+
 def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, changes_text: str = "") -> str:
     rows = [offer_to_row(offer, number) for number, offer in enumerate(offers, start=1)]
     generated_on = generated_on or date.today().isoformat()
@@ -111,6 +117,7 @@ def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, c
     cv_script = CV_SCRIPT_FILE.read_text(encoding="utf-8").replace("</", "<\\/")
     return (
         template.replace("{{DATE}}", html.escape(french_date(generated_on)))
+        .replace("{{CREATION}}", html.escape(page_created_text()))
         .replace("{{NOUVEAUTES}}", html.escape(changes_text))
         .replace("{{NOMBRE}}", str(len(rows)))
         .replace("{{REGLES}}", _json_for_html(browser_rules()))

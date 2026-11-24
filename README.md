@@ -15,11 +15,11 @@ Dans PowerShell, depuis le dossier du dépôt (`jobs-insights-kandet`) :
 
 ```powershell
 cd .\03-amelioration-preuve-de-concept
-python main.py --html                                      # collecte (environ 17 min la 1re fois, environ 1 min ensuite)
+python main.py                                             # collecte + page offres.html (environ 17 min la 1re fois, quelques minutes ensuite)
 python main.py --depuis offres.json --cv cv-exemple.txt    # classement des offres pour un CV fictif
 ```
 
-Ouvrez ensuite **`offres.html`** d'un double-clic. Dans la page, vous pouvez :
+Ouvrez ensuite **`offres.html`** d'un double-clic. Elle est recréée à chaque lancement de `main.py` : après une nouvelle collecte, rafraîchissez-la (F5). Dans la page, vous pouvez :
 - filtrer par région, ville, technologie, niveau, salaire ou stage ;
 - comparer les offres avec votre CV ;
 - vérifier votre lettre pour une offre.
