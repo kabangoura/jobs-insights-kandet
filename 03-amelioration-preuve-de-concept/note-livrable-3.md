@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 209 tests`. Deux tests comparent la page avec Python à l'aide de Node.js, l'un pour le CV et l'autre pour la lettre. Si Node.js n'est pas installé, ces deux tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 216 tests`. Cinq tests comparent la page avec Python à l'aide de Node.js : le CV, la lettre et les statistiques. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -72,6 +72,7 @@ Dans la page :
 - **Offres sans description** : pour les offres de Québec emploi, Talent.com, Indeed et ZipRecruiter, le Guichet-Emplois ne donne ni les tâches ni les exigences. La carte le dit dans un encadré orange, et le lien « Lire l'offre complète sur … » est mis en gras. La case « Description complète seulement » les cache, mais elle n'est pas cochée par défaut : le seul stage confirmé de la collecte du 24 novembre est une de ces offres.
 - **« Exporter en CSV »** enregistre les offres affichées pour Excel (une ligne par annonce, avec une colonne `description_complete`).
 - **« Copier le lien de cette recherche »** garde les filtres dans l'adresse de la page. Par exemple, `offres.html#region=Estrie&techno=SQL` rouvre la page avec ces filtres.
+- **Onglet « Statistiques »** (à côté de « Liste des offres ») : des graphiques calculés sur les offres affichées, donc ils suivent les filtres. On y trouve les salaires médians (annuel et horaire, jamais mélangés), les stages, les offres par région, les technologies, le niveau, le salaire selon le niveau, les professions et le nombre d'offres à chaque jour de collecte. Un clic sur une région, une technologie ou un niveau applique le filtre. `offres.html#vue=stats` ouvre directement cet onglet.
 - La page s'adapte au téléphone (filtres repliables) et au mode sombre.
 - **« Comparer les offres avec mon CV »** (en haut des résultats) :
   - choisir un CV en `.docx` ou en `.txt`, ou coller son texte ;
@@ -252,7 +253,7 @@ Je me suis aussi appuyé sur la [synthèse du L2](https://github.com/chergreg/jo
 **Ce que j'ai modifié :**
 
 - Tout est réécrit avec la bibliothèque standard (`html.parser`) : pas de BeautifulSoup ni de Pydantic, donc aucune installation.
-- Le prototype est découpé en modules : `guichet`, `fiches`, `remotive`, `normalisation`, `competences`, `fusion`, `analyse`, `regions`, `filtres`, `export`, `interface` (avec `interface_cv.js`), `candidature`, `lettre`, `historique`, `main`.
+- Le prototype est découpé en modules : `guichet`, `fiches`, `remotive`, `normalisation`, `competences`, `fusion`, `analyse`, `regions`, `filtres`, `export`, `interface` (avec `interface_cv.js` et `interface_stats.js`), `candidature`, `lettre`, `historique`, `main`.
 - Nouveaux champs :
   - titre de l'employeur, description, tâches ;
   - date d'expiration et date de début ;
@@ -326,7 +327,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (209 tests)
+# Tests hors ligne (216 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -353,7 +354,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 209 |
+| Tests hors ligne | 33 | 216 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -539,6 +540,32 @@ Ce qui a été ajouté : l'encadré sur la carte, la case « Description complè
 
 Vérifié dans Edge avec la vraie collecte : 172 offres sans filtre, 132 offres (140 annonces) avec la case cochée. La carte du stage de Revenu Québec affiche l'encadré et le lien vers Québec emploi. Les 3 nouveaux tests (`test_sans_description.py`) vérifient aussi qu'une description faite seulement d'espaces compte comme absente.
 
+### Vérification de l'onglet Statistiques (24 novembre)
+
+Essai d'abord, pour savoir quels chiffres sont assez fiables pour un graphique (collecte du 24 novembre, 183 annonces) :
+
+| Donnée | Remplie | Décision |
+|---|---|---|
+| Région | 170 sur 183 | graphique, avec « Non précisé » à la fin |
+| Salaire | 96 annuels, 72 horaires | deux médianes séparées, jamais mélangées |
+| Niveau | 128 sur 183 | graphique, avec « Non précisé » |
+| Technologies | 80 offres en citent au moins une | graphique, et ce nombre est écrit |
+| Mode de travail | 84 sur 183 | pas de graphique : trop d'offres sans information |
+| Type d'emploi | mots différents selon la source (« Permanent, Temps plein », `full_time`…) | pas de graphique |
+| Historique | 6 collectes sur 3 jours | une colonne par jour (la dernière collecte du jour) |
+
+Piège trouvé dans l'historique : le 23 novembre, quatre collectes ont été lancées en une heure. La colonne « nouvelles » de la dernière (1 nouvelle) compare avec la collecte précédente de 44 minutes plus tôt, pas avec la veille. Le graphique montre donc seulement le nombre d'offres en ligne chaque jour.
+
+Ce qui a été ajouté :
+- `interface_stats.js` fait les calculs avec les mêmes règles que `analyse.py` ;
+- `historique.read_history` lit l'historique, avec une ligne par jour ;
+- dans la page, l'onglet avec 4 tuiles (offres, salaire annuel médian, salaire horaire médian, stages) et 6 graphiques en barres d'une seule couleur, avec la valeur écrite au bout de chaque barre. La couleur a été vérifiée en mode clair et sombre (contraste avec le fond).
+
+Vérifications :
+- sur la vraie collecte, la page et `analyse.py` donnent les mêmes chiffres : 96 salaires annuels (médiane 71 860 $), 72 horaires (médiane 35,50 $), et les mêmes technologies, régions et niveaux. Dans l'onglet, les annonces semblables comptent pour une offre : 87 salaires annuels, médiane 70 720 $ ;
+- les 7 nouveaux tests (`test_interface_stats.py`) comparent avec Python à l'aide de Node.js, et vérifient la médiane d'un nombre pair de valeurs, le taux horaire jamais compté dans le salaire annuel et la lecture de l'historique (ligne abîmée ignorée). J'ai vérifié qu'ils échouent si on mélange les unités de salaire ou si on oublie « Non précisé » ;
+- dans Edge : mode clair, mode sombre, et largeur de téléphone avec le filtre Capitale-Nationale (25 offres : les graphiques suivent le filtre).
+
 ### Ce que les données montrent (17 novembre)
 
 - **Salaire médian** (valeur basse de la fourchette) : 70 000 $ par année (111 offres), 36 $ de l'heure (68 offres).
@@ -566,6 +593,8 @@ Vérifié dans Edge avec la vraie collecte : 172 offres sans filtre, 132 offres 
 - **Dépendance au site :** si le Guichet-Emplois change ses classes CSS ou ses balises RDFa, il faudra adapter `guichet.py` et `fiches.py`. Les tests utilisent une copie du balisage de novembre 2026.
 
 - **Régions :** la région est trouvée à partir du nom de la ville. Un lieu qui n'est pas une municipalité ni un arrondissement (hameau, quartier, « Différentes régions ») reste sans région. Un nom porté par des municipalités de deux régions différentes reste aussi sans région, sans qu'on en choisisse une.
+
+- **Statistiques :** les médianes portent sur la valeur basse de la fourchette de salaire. Avec un filtre, certains graphiques ont peu d'offres : le nombre d'offres est toujours écrit à côté de la médiane, et le salaire d'un niveau n'est pas montré s'il y a moins de 3 salaires. L'historique ne commence que le 20 novembre.
 
 - **Annonces semblables :** la règle compare le titre, l'employeur et le site. Deux vrais postes différents avec exactement le même titre chez le même employeur sont donc montrés sur la même carte, mais chacun garde sa ligne et son lien. Un même poste publié par deux employeurs différents (par exemple deux agences) n'est pas regroupé.
 

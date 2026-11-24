@@ -32,7 +32,7 @@ from interface import write_html
 from lettre import build_letter_report, check_letter, find_offer, letter_tips
 from texte import french_date
 from guichet import CNP_CODES_TI, GUICHET_DELAY_SECONDS, GUICHET_SEARCH_URL, fetch_guichet
-from historique import Changes, append_history, clean_cache, compare_with_previous, load_previous
+from historique import Changes, append_history, clean_cache, compare_with_previous, load_previous, read_history
 from semblables import republished, similar_groups
 from modele import AggregatedOffer, SourceRecord
 from normalisation import normalize_record
@@ -568,7 +568,9 @@ def main(argv: list[str] | None = None) -> None:
     elif not args.sans_html and not args.sans_sauvegarde:
         page = default_page
     if page is not None:
-        write_html(page_offers, page, generated_on=collection_date, changes_text=changes_text)
+        # Onglet Statistiques : nombre d'offres à chaque jour de collecte (historique-collectes.csv).
+        history = read_history(default_page.parent / "historique-collectes.csv")
+        write_html(page_offers, page, generated_on=collection_date, changes_text=changes_text, history=history)
         print(f"Page mise à jour : {page} ({len(page_offers)} offres). Rafraîchissez le navigateur (F5) si elle est déjà ouverte.")
 
 

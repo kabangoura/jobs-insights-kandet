@@ -28,6 +28,7 @@ JOB_TYPE_LABELS = {
 }
 TEMPLATE_FILE = Path(__file__).with_name("interface_modele.html")
 CV_SCRIPT_FILE = Path(__file__).with_name("interface_cv.js")
+STATS_SCRIPT_FILE = Path(__file__).with_name("interface_stats.js")
 
 
 def browser_rules() -> dict[str, object]:
@@ -117,7 +118,14 @@ def count_text(posts: int, announcements: int) -> str:
     return text if posts == announcements else f"{text} ({announcements} annonces)"
 
 
-def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, changes_text: str = "") -> str:
+def _script(path: Path) -> str:
+    """Script JavaScript à placer dans la page (« </ » ne peut pas fermer la balise <script>)."""
+    return path.read_text(encoding="utf-8").replace("</", "<\\/")
+
+
+def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, changes_text: str = "",
+               history: list[dict[str, object]] | None = None) -> str:
+    """Page complète. `history` : une ligne par jour de collecte (historique.read_history), pour l'onglet Statistiques."""
     rows = [offer_to_row(offer, number) for number, offer in enumerate(offers, start=1)]
     # Annonces semblables (semblables.py) : la page les montre sur une seule carte.
     groups = similar_groups(offers)
@@ -126,18 +134,20 @@ def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, c
         row["republiee"] = again
     generated_on = generated_on or date.today().isoformat()
     template = TEMPLATE_FILE.read_text(encoding="utf-8")
-    cv_script = CV_SCRIPT_FILE.read_text(encoding="utf-8").replace("</", "<\\/")
     return (
         template.replace("{{DATE}}", html.escape(french_date(generated_on)))
         .replace("{{CREATION}}", html.escape(page_created_text()))
         .replace("{{NOUVEAUTES}}", html.escape(changes_text))
         .replace("{{NOMBRE}}", count_text(len(set(groups)), len(rows)))
         .replace("{{REGLES}}", _json_for_html(browser_rules()))
-        .replace("{{SCRIPT_CV}}", cv_script)
+        .replace("{{SCRIPT_CV}}", _script(CV_SCRIPT_FILE))
+        .replace("{{SCRIPT_STATS}}", _script(STATS_SCRIPT_FILE))
+        .replace("{{HISTORIQUE}}", _json_for_html(history or []))
         .replace("{{DONNEES}}", _json_for_html(rows))
     )
 
 
-def write_html(offers: list[AggregatedOffer], path: Path, generated_on: str | None = None, changes_text: str = "") -> None:
+def write_html(offers: list[AggregatedOffer], path: Path, generated_on: str | None = None, changes_text: str = "",
+               history: list[dict[str, object]] | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(build_html(offers, generated_on, changes_text), encoding="utf-8")
+    path.write_text(build_html(offers, generated_on, changes_text, history), encoding="utf-8")

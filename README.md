@@ -22,7 +22,8 @@ python main.py --depuis offres.json --cv cv-exemple.txt    # classement des offr
 Ouvrez ensuite **`offres.html`** d'un double-clic. Elle est recréée à chaque lancement de `main.py` : après une nouvelle collecte, rafraîchissez-la (F5). Dans la page, vous pouvez :
 - filtrer par région, ville, technologie, niveau, salaire ou stage ;
 - comparer les offres avec votre CV ;
-- vérifier votre lettre pour une offre.
+- vérifier votre lettre pour une offre ;
+- voir des statistiques (salaires, régions, technologies…) dans l'onglet « Statistiques ».
 
 Le CV et la lettre restent dans le navigateur : rien n'est envoyé.
 

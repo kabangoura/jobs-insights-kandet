@@ -141,6 +141,32 @@ def append_history(path: Path, offers_count: int, changes: Changes | None, posti
         ])
 
 
+
+def read_history(path: Path) -> list[dict[str, object]]:
+    """Une ligne par jour (la dernière collecte du jour), pour le graphique de la page.
+
+    Le 23 novembre, quatre collectes ont été lancées en une heure : on garde la dernière.
+    Seul le nombre d'offres est repris. Les colonnes « nouvelles » et « disparues » comparent
+    avec la collecte précédente, qui peut dater de la même heure : elles ne disent pas ce qui
+    a changé d'un jour à l'autre. Une ligne illisible est ignorée, jamais devinée.
+    """
+    if not path.exists():
+        return []
+    by_day: dict[str, dict[str, object]] = {}
+    with path.open(encoding="utf-8-sig", newline="") as file:
+        for row in csv.DictReader(file, delimiter=";"):
+            try:
+                day = datetime.strptime(row["date"], "%Y-%m-%d %H:%M").date().isoformat()
+                by_day[day] = {
+                    "date": day,
+                    "offres": int(row["offres"]),
+                    "erreurs": int(row.get("erreurs") or 0),
+                }
+            except (KeyError, TypeError, ValueError):
+                continue
+    return [by_day[day] for day in sorted(by_day)]
+
+
 def clean_cache(cache_dir: Path, current_ids: set[str]) -> int:
     """Supprime les fiches en cache des offres qui ne sont plus dans les résultats. Retourne le nombre retiré."""
     removed = 0

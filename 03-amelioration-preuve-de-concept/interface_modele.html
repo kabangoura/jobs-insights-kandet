@@ -21,6 +21,7 @@
     --rouge: #b42318;
     --rouge-fond: #fdecea;
     --ombre: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+    --barre: #1f5fbf; /* couleur des barres des graphiques (vérifiée : contraste et lisibilité) */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -39,6 +40,7 @@
       --rouge: #ff8a80;
       --rouge-fond: #3d1c1a;
       --ombre: none;
+      --barre: #5b8def;
     }
   }
   * { box-sizing: border-box; }
@@ -165,6 +167,33 @@
   details dd { margin: 0; }
   .sans-description { margin: 8px 0 0; font-size: 14px; color: var(--orange); background: var(--orange-fond); padding: 6px 10px; border-radius: 6px; }
   .liens a.important { font-weight: 600; }
+  /* Onglet Statistiques */
+  .vues { display: flex; gap: 6px; margin-bottom: 12px; }
+  .vues button[aria-pressed="true"] { background: var(--accent-fond); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .stats-intro { margin: 0 0 12px; color: var(--doux); font-size: 14px; }
+  .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .tuile { background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 12px 14px; box-shadow: var(--ombre); }
+  .tuile .etiquette { font-size: 13px; color: var(--doux); }
+  .tuile .valeur { font-size: 24px; font-weight: 600; margin-top: 2px; }
+  .tuile .detail { font-size: 12.5px; color: var(--doux); }
+  .graphiques { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+  .graphique { margin: 0; background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 14px 16px; box-shadow: var(--ombre); }
+  .graphique h3 { margin: 0; font-size: 15px; }
+  .graphique .sous { margin: 2px 0 10px; font-size: 13px; color: var(--doux); }
+  .ligne-barre {
+    display: grid; grid-template-columns: minmax(90px, 38%) 1fr auto; align-items: center; gap: 8px;
+    width: 100%; margin: 0; padding: 3px 4px; border: 0; border-radius: 4px; background: none;
+    text-align: left; font-size: 13.5px; color: var(--texte);
+  }
+  button.ligne-barre:hover, button.ligne-barre:focus-visible { background: var(--fond); }
+  .ligne-barre .nom { overflow-wrap: anywhere; }
+  .remplissage { display: block; height: 14px; min-width: 2px; background: var(--barre); border-radius: 0 4px 4px 0; }
+  .valeur-barre { font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .colonnes { display: flex; align-items: flex-end; gap: 14px; height: 150px; padding-top: 20px; border-bottom: 1px solid var(--bord); }
+  .colonne { flex: 1; max-width: 64px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; font-size: 13px; }
+  .colonne .remplissage-col { width: 24px; min-height: 2px; background: var(--barre); border-radius: 4px 4px 0 0; }
+  .dates-colonnes { display: flex; gap: 14px; margin-top: 4px; }
+  .dates-colonnes span { flex: 1; max-width: 64px; text-align: center; font-size: 12px; color: var(--doux); }
   .semblables { margin-top: 8px; font-size: 14px; color: var(--doux); }
   .semblables ul { margin: 4px 0 0; padding-left: 20px; }
   #compte small.annonces { font-weight: 400; color: var(--doux); font-size: 14px; }
@@ -321,6 +350,15 @@
         <button type="button" id="exporter" class="principal">Exporter en CSV</button>
       </div>
     </div>
+    <div class="vues" role="group" aria-label="Affichage">
+      <button type="button" id="vue-liste" aria-pressed="true">Liste des offres</button>
+      <button type="button" id="vue-stats" aria-pressed="false">Statistiques</button>
+    </div>
+    <section id="stats" hidden aria-label="Statistiques des offres affichées">
+      <p class="stats-intro" id="stats-intro"></p>
+      <div class="tuiles" id="stats-tuiles"></div>
+      <div class="graphiques" id="stats-graphiques"></div>
+    </section>
     <div class="technos-populaires" id="populaires" aria-label="Technologies les plus demandées"></div>
     <div class="liste" id="liste"></div>
     <button type="button" id="plus" hidden>Afficher plus d'offres</button>
@@ -355,8 +393,10 @@
 </footer>
 
 <script type="application/json" id="regles">{{REGLES}}</script>
+<script type="application/json" id="historique">{{HISTORIQUE}}</script>
 <script>
 {{SCRIPT_CV}}
+{{SCRIPT_STATS}}
 </script>
 <script type="application/json" id="donnees">{{DONNEES}}</script>
 <script>
@@ -410,6 +450,7 @@
   // Lecture et écriture des filtres dans l'adresse (#region=…&techno=…) pour partager une recherche.
   function lireAdresse() {
     const params = new URLSearchParams(location.hash.slice(1));
+    vue = params.get("vue") === "stats" ? "stats" : "liste";
     for (const id of champs) {
       if (!params.has(id)) continue;
       const champ = $(id);
@@ -426,6 +467,7 @@
       if (champ.type === "checkbox") { if (champ.checked) params.set(id, "1"); }
       else if (champ.value && !(id === "tri" && (champ.value === "recent" || champ.value === "cv")) && !(id === "unite" && champ.value === "année")) params.set(id, champ.value);
     }
+    if (vue === "stats") params.set("vue", "stats");
     const hash = params.toString();
     history.replaceState(null, "", hash ? "#" + hash : location.pathname + location.search);
   }
@@ -638,6 +680,133 @@
     if (zone.children.length === 1) zone.append(element("span", "etiquette", "aucune dans ces résultats"));
   }
 
+  // ---- Onglet Statistiques (calculs dans interface_stats.js, mêmes règles que analyse.py) ----
+  const HISTORIQUE = JSON.parse(document.getElementById("historique").textContent);
+  let vue = "liste";
+  const argent = (v) => `${nombre.format(v)} $`;
+
+  function tuile(etiquette, valeur, detail) {
+    const div = element("div", "tuile");
+    div.append(element("div", "etiquette", etiquette), element("div", "valeur", valeur));
+    if (detail) div.append(element("div", "detail", detail));
+    return div;
+  }
+
+  function graphique(titre, sousTitre) {
+    const fig = element("figure", "graphique");
+    fig.append(element("h3", "", titre));
+    if (sousTitre) fig.append(element("p", "sous", sousTitre));
+    return fig;
+  }
+
+  // Barres horizontales : une seule série, la valeur écrite au bout de la barre.
+  // Avec `filtrer`, un clic sur une barre applique ce filtre (sauf « Non précisé »).
+  function barres(fig, lignes, { total = 0, texte = (n) => String(n), filtrer = null } = {}) {
+    const max = Math.max(...lignes.map(([, n]) => n), 1);
+    for (const [nom, n, detail] of lignes) {
+      const cliquable = filtrer && nom !== "Non précisé" && !nom.startsWith("Autres");
+      const ligne = element(cliquable ? "button" : "div", "ligne-barre");
+      const valeur = texte(n, detail);
+      const part = total ? ` (${Math.round((n / total) * 100)} % des offres affichées)` : "";
+      ligne.title = `${nom} : ${valeur}${part}${cliquable ? " · cliquer pour filtrer" : ""}`;
+      ligne.setAttribute("aria-label", ligne.title);
+      const piste = element("span", "piste");
+      const remplissage = element("span", "remplissage");
+      remplissage.style.width = `${(n / max) * 100}%`;
+      piste.append(remplissage);
+      ligne.append(element("span", "nom", nom), piste, element("span", "valeur-barre", valeur));
+      if (cliquable) { ligne.type = "button"; ligne.addEventListener("click", () => filtrer(nom)); }
+      fig.append(ligne);
+    }
+    if (!lignes.length) fig.append(element("p", "sous", "Aucune donnée pour ces offres."));
+  }
+
+  // Les premiers, puis une ligne « Autres … » pour le reste (rien n'est caché).
+  function premiers(liste, nombreMax, nomAutres) {
+    if (liste.length <= nombreMax + 1) return liste;
+    const reste = liste.slice(nombreMax);
+    return [...liste.slice(0, nombreMax), [`${nomAutres} (${reste.length})`, reste.reduce((s, [, n]) => s + n, 0)]];
+  }
+
+  function choisirFiltre(id, valeur) {
+    $(id).value = valeur;
+    if (id === "region") remplirVilles();
+    mettreAJour(true);
+  }
+
+  function afficherStatistiques(offres) {
+    const s = calculerStatistiques(offres);
+    $("stats-intro").textContent = `Statistiques des ${s.total} offre${s.total > 1 ? "s" : ""} affichée${s.total > 1 ? "s" : ""} : ` +
+      "elles suivent les filtres de gauche. Les annonces semblables comptent pour une seule offre. Une information absente n'est jamais devinée.";
+    const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+    $("stats-tuiles").replaceChildren(
+      tuile("Offres affichées", nombre.format(s.total), s.total ? `${s.avecTechnologie} citent au moins une technologie` : ""),
+      tuile("Salaire annuel médian", s.salaireAnnuel.mediane === null ? "—" : argent(s.salaireAnnuel.mediane),
+        `valeur basse de la fourchette · ${pluriel(s.salaireAnnuel.offres, "offre")}`),
+      tuile("Salaire horaire médian", s.salaireHoraire.mediane === null ? "—" : argent(s.salaireHoraire.mediane),
+        `valeur basse · ${pluriel(s.salaireHoraire.offres, "offre")}`),
+      tuile("Stages", nombre.format(s.stages), s.stagesPossibles ? `et ${pluriel(s.stagesPossibles, "stage")} possible${s.stagesPossibles > 1 ? "s" : ""}` : "confirmés dans l'offre"),
+    );
+
+    const figures = [];
+    let fig = graphique("Offres par région", "Cliquez sur une région pour filtrer");
+    // « Non précisé » à la fin : ce n'est pas une région.
+    const regions = s.regions.filter(([nom]) => nom !== "Non précisé"), sansRegion = s.regions.find(([nom]) => nom === "Non précisé");
+    barres(fig, [...premiers(regions, 8, "Autres régions"), ...(sansRegion ? [sansRegion] : [])],
+      { total: s.total, filtrer: (nom) => choisirFiltre("region", nom) });
+    figures.push(fig);
+
+    fig = graphique("Technologies les plus demandées", `Nombre d'offres qui citent chaque technologie (${s.avecTechnologie} offres en citent au moins une)`);
+    barres(fig, s.technologies.slice(0, 10), { total: s.total, filtrer: (nom) => choisirFiltre("techno", nom) });
+    figures.push(fig);
+
+    fig = graphique("Niveau demandé", "Selon l'expérience demandée et le titre de l'offre");
+    barres(fig, s.niveaux.filter(([, n]) => n), { total: s.total, filtrer: (nom) => choisirFiltre("niveau", nom) });
+    figures.push(fig);
+
+    const niveauxSalaire = Object.entries(s.salaireParNiveau).filter(([, v]) => v.offres >= 3);
+    fig = graphique("Salaire annuel médian selon le niveau",
+      "Valeur basse de la fourchette, salaires annuels seulement. Un niveau avec moins de 3 salaires n'est pas montré.");
+    barres(fig, niveauxSalaire.map(([nom, v]) => [nom, v.mediane, v.offres]), { texte: (n, nb) => `${argent(n)} · ${pluriel(nb, "offre")}` });
+    figures.push(fig);
+
+    fig = graphique("Professions les plus fréquentes", "Titre de la Classification nationale des professions (CNP)");
+    barres(fig, s.professions.slice(0, 8), { total: s.total });
+    // Pas de barre « Autres » ici : elle écraserait toutes les autres (beaucoup de professions à 1 ou 2 offres).
+    const autres = s.professions.slice(8);
+    if (autres.length) {
+      fig.append(element("p", "sous", `Et ${autres.length} autres professions, pour ${autres.reduce((n, [, k]) => n + k, 0)} offres.`));
+    }
+    figures.push(fig);
+
+    fig = graphique("Offres en ligne à chaque collecte", "Toutes les offres (sans filtre), dernière collecte de chaque jour");
+    if (HISTORIQUE.length >= 2) {
+      const max = Math.max(...HISTORIQUE.map((h) => h.offres), 1);
+      const colonnes = element("div", "colonnes"), dates = element("div", "dates-colonnes");
+      for (const h of HISTORIQUE) {
+        const col = element("div", "colonne");
+        col.title = `${dateLisible(h.date)} : ${h.offres} annonces${h.erreurs ? " (collecte avec erreurs)" : ""}`;
+        col.tabIndex = 0;
+        col.setAttribute("aria-label", col.title);
+        const barre = element("div", "remplissage-col");
+        barre.style.height = `${(h.offres / max) * 100}%`;
+        col.append(element("span", "valeur-barre", String(h.offres)), barre);
+        colonnes.append(col);
+        dates.append(element("span", "", dateLisible(h.date).replace(/ [0-9]{4}$/, "")));
+      }
+      fig.append(colonnes, dates);
+    } else {
+      fig.append(element("p", "sous", "Ce graphique apparaît après au moins deux jours de collecte (historique-collectes.csv)."));
+    }
+    figures.push(fig);
+    $("stats-graphiques").replaceChildren(...figures);
+  }
+
+  function changerVue(nouvelle) {
+    vue = nouvelle;
+    mettreAJour(false);
+  }
+
   let resultatsCourants = [];
   const NOMBRE_POSTES = new Set(OFFRES.map((o) => o.groupe)).size;
 
@@ -662,6 +831,18 @@
     compte.textContent = `${cartes.length} offre${cartes.length > 1 ? "s" : ""} sur ${NOMBRE_POSTES}`;
     if (resultatsCourants.length !== cartes.length) {
       compte.append(element("small", "annonces", ` · ${resultatsCourants.length} annonces`));
+    }
+    const statistiques = vue === "stats";
+    $("vue-liste").setAttribute("aria-pressed", String(!statistiques));
+    $("vue-stats").setAttribute("aria-pressed", String(statistiques));
+    $("stats").hidden = !statistiques;
+    $("populaires").hidden = statistiques;
+    $("liste").hidden = statistiques;
+    if (statistiques) {
+      afficherStatistiques(cartes.map((c) => c.o));
+      $("plus").hidden = true;
+      ecrireAdresse();
+      return;
     }
     afficherPopulaires(cartes.map((c) => c.o));
     const liste = $("liste");
@@ -856,6 +1037,8 @@
   });
   $("plus").addEventListener("click", () => { affichees += PAR_PAGE; mettreAJour(false); });
   $("exporter").addEventListener("click", exporterCsv);
+  $("vue-liste").addEventListener("click", () => changerVue("liste"));
+  $("vue-stats").addEventListener("click", () => changerVue("stats"));
   $("copier").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(location.href); $("copier").textContent = "Lien copié ✓"; }
     catch { $("copier").textContent = "Copiez l'adresse de la page"; }

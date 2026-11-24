@@ -386,6 +386,10 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - essai d'abord : 43 offres sur 183 sans description (Québec emploi 24, Talent.com 15, Indeed 3, ZipRecruiter 1). Le Guichet-Emplois n'a pas d'autre texte pour elles, et le seul stage confirmé en fait partie ;
   - ajout ensuite : encadré sur la carte, lien « Lire l'offre complète sur … » en gras, case « Description complète seulement » (non cochée par défaut), colonne `description_complete` dans le CSV de la page, ligne dans le résumé du terminal ;
   - 3 nouveaux tests dans `test_sans_description.py` ; au total, 209 tests OK.
+- **Onglet Statistiques ✅ (24 novembre)** :
+  - essai d'abord : région, salaire, niveau et technologies sont assez remplis pour un graphique. Le mode de travail (84 sur 183) et le type d'emploi (mots différents selon la source) ne le sont pas. Dans l'historique, seul le nombre d'offres par jour est fiable ;
+  - ajout ensuite : `interface_stats.js`, `historique.read_history`, onglet « Statistiques » dans `offres.html` (4 tuiles, 6 graphiques qui suivent les filtres, un clic sur une barre filtre) ;
+  - 7 nouveaux tests dans `test_interface_stats.py`, dont la comparaison avec Python par Node.js ; au total, 216 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Score de pertinence pour un étudiant du DEC** : règles simples et affichées (stage, niveau débutant, technologies vues au cours). Le score doit être expliqué, pas une note magique.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.

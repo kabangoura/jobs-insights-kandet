@@ -77,8 +77,8 @@ class PageTests(unittest.TestCase):
     def test_text_from_a_job_offer_cannot_break_the_page(self) -> None:
         piege = "</script><script>alert('piège')</script>"
         page = build_html([offer(1, original_title=piege, employer="<b>Gras</b>")], generated_on="2026-11-17")
-        # Seules nos quatre balises <script> sont fermées dans la page (règles, script CV, données, programme).
-        self.assertEqual(page.count("</script>"), 4)
+        # Seules nos cinq balises <script> sont fermées dans la page (règles, historique, scripts CV et statistiques, données, programme).
+        self.assertEqual(page.count("</script>"), 5)
         rows = embedded_rows(page)
         self.assertEqual(rows[0]["titre"], piege)  # le texte est gardé tel quel, comme donnée
         self.assertEqual(rows[0]["employeur"], "<b>Gras</b>")
