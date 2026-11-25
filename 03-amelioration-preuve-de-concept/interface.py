@@ -126,8 +126,11 @@ def _script(path: Path) -> str:
 
 
 def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, changes_text: str = "",
-               history: list[dict[str, object]] | None = None) -> str:
-    """Page complète. `history` : une ligne par jour de collecte (historique.read_history), pour l'onglet Statistiques."""
+               history: list[dict[str, object]] | None = None, trend: dict[str, object] | None = None) -> str:
+    """Page complète, pour l'onglet Statistiques :
+    - `history` : une ligne par jour de collecte (historique.read_history) ;
+    - `trend` : tendance mensuelle des données ouvertes (open_data_for_page), ou None.
+    """
     rows = [offer_to_row(offer, number) for number, offer in enumerate(offers, start=1)]
     # Annonces semblables (semblables.py) : la page les montre sur une seule carte.
     groups = similar_groups(offers)
@@ -152,11 +155,21 @@ def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, c
         .replace("{{SCRIPT_STATS}}", _script(STATS_SCRIPT_FILE))
         .replace("{{SCRIPT_SUIVI}}", _script(SUIVI_SCRIPT_FILE))
         .replace("{{HISTORIQUE}}", _json_for_html(history or []))
+        .replace("{{TENDANCE}}", _json_for_html(trend or {}))
         .replace("{{DONNEES}}", _json_for_html(rows))
     )
 
 
 def write_html(offers: list[AggregatedOffer], path: Path, generated_on: str | None = None, changes_text: str = "",
-               history: list[dict[str, object]] | None = None) -> None:
+               history: list[dict[str, object]] | None = None, trend: dict[str, object] | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(build_html(offers, generated_on, changes_text, history), encoding="utf-8")
+    path.write_text(build_html(offers, generated_on, changes_text, history, trend), encoding="utf-8")
+
+
+def open_data_for_page(document: dict[str, object]) -> dict[str, object] | None:
+    """Les mois des données ouvertes et la mention de la source à afficher (Licence du gouvernement ouvert)."""
+    from donnees_ouvertes import trend_for_page
+    months = trend_for_page(document)
+    if not months:
+        return None
+    return {key: document.get(key, "") for key in ("source", "page", "licence", "licence_url", "attribution", "filtre")} | {"mois": months}

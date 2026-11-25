@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 232 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 238 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -72,7 +72,7 @@ Dans la page :
 - **Offres sans description** : pour les offres de Québec emploi, Talent.com, Indeed et ZipRecruiter, le Guichet-Emplois ne donne ni les tâches ni les exigences. La carte le dit dans un encadré orange, et le lien « Lire l'offre complète sur … » est mis en gras. La case « Description complète seulement » les cache, mais elle n'est pas cochée par défaut : le seul stage confirmé de la collecte du 24 novembre est une de ces offres.
 - **« Exporter en CSV »** enregistre les offres affichées pour Excel (une ligne par annonce, avec une colonne `description_complete`).
 - **« Copier le lien de cette recherche »** garde les filtres dans l'adresse de la page. Par exemple, `offres.html#region=Estrie&techno=SQL` rouvre la page avec ces filtres.
-- **Onglet « Statistiques »** (à côté de « Liste des offres ») : des graphiques calculés sur les offres affichées, donc ils suivent les filtres. On y trouve les salaires médians (annuel et horaire, jamais mélangés), les stages, les offres par région, les technologies, le niveau, le salaire selon le niveau, les professions et le nombre d'offres à chaque jour de collecte. Un clic sur une région, une technologie ou un niveau applique le filtre. `offres.html#vue=stats` ouvre directement cet onglet.
+- **Onglet « Statistiques »** (à côté de « Liste des offres ») : des graphiques calculés sur les offres affichées, donc ils suivent les filtres. On y trouve les salaires médians (annuel et horaire, jamais mélangés), les stages, les offres par région, les technologies, le niveau, le salaire selon le niveau, les professions et le nombre d'offres à chaque jour de collecte. Après `python main.py --donnees-ouvertes`, l'onglet montre aussi la **tendance des 12 derniers mois** (offres TI au Québec et salaire annuel médian, mois par mois), avec les données ouvertes du Guichet-Emplois. Un clic sur une région, une technologie ou un niveau applique le filtre. `offres.html#vue=stats` ouvre directement cet onglet.
 - **Suivi de mes candidatures** : « ☆ Suivre cette offre » sur une carte, puis un statut (À postuler, Postulé, Entrevue, Offre reçue, Refusé, Abandonné). L'onglet « Mes candidatures » liste les offres suivies avec une note (contact, date d'entrevue…), et le bouton « Exporter mon suivi (CSV) » les enregistre pour Excel. Le suivi reste dans le navigateur de l'ordinateur (`localStorage`) : rien n'est envoyé. Il est gardé quand `main.py` recrée la page. Une offre qui disparaît d'une collecte reste dans le suivi, avec la mention « N'est plus dans la dernière collecte ».
 - **Score « étudiant du DEC »** sur chaque carte, sur 100, avec le détail des points : stage confirmé (+40, possible +20), niveau débutant (+30, non précisé +15, intermédiaire +10), technologies vues au DEC (jusqu'à +30). Le tri « Score étudiant du DEC » met en premier les offres les plus adaptées à un étudiant en fin de DEC.
 - La page s'adapte au téléphone (filtres repliables) et au mode sombre.
@@ -183,6 +183,7 @@ python main.py --depuis offres.json --techno SQL --ville Montréal --csv
 | `--html` | Met dans `offres.html` seulement les offres affichées par les filtres (sans cette option, la page contient toutes les offres) |
 | `--sans-html` | Ne pas recréer `offres.html` |
 | `--resume-seulement` | Affiche les statistiques sans la liste |
+| `--donnees-ouvertes` | Lit les données ouvertes du Guichet-Emplois pour la tendance des 12 derniers mois dans l'onglet Statistiques (`--donnees-ouvertes 24` pour 24 mois). La première fois, environ 12 fichiers de 60 Mo sont lus en continu, sans être enregistrés (quelques minutes). Ensuite, seuls les nouveaux mois sont lus |
 | `--score-dec` | Classe les offres affichées selon le score « étudiant du DEC », avec l'explication de chaque score (`--nb-offres` pour en voir plus que 10) |
 
 Les filtres changent ce qui est affiché, ce qui va dans le CSV et ce qui va dans la page HTML. `offres.json` garde toujours toutes les offres.
@@ -202,6 +203,7 @@ La liste complète des options s'obtient avec `python main.py --help`.
 | `lettre-exemple.txt` | Lettre fictive pour essayer la vérification de lettre | Oui |
 | `rapport-lettre.md` | Vérification d'une lettre pour une offre | Non |
 | `historique-collectes.csv` | Une ligne par collecte : offres, nouvelles, disparues | Non |
+| `donnees-ouvertes.json` | Résumé mois par mois des données ouvertes (`--donnees-ouvertes`), avec la source et la licence | Non |
 | `journal-collectes.log` | Ce qu'a affiché chaque collecte lancée par `collecte-reguliere.ps1` | Non |
 | `collecte-reguliere.ps1`, `planifier-collecte.ps1` | Scripts de collecte régulière et automatique | Oui |
 | `regions_quebec.csv` | Municipalités et arrondissements du Québec avec leur région (source officielle, voir plus bas) | Oui |
@@ -330,7 +332,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (232 tests)
+# Tests hors ligne (238 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -357,7 +359,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 232 |
+| Tests hors ligne | 33 | 238 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -594,6 +596,31 @@ Essai d'abord sur la collecte du 24 novembre :
 
 Vérifications : `python main.py --depuis offres.json --score-dec` et la page triée par score donnent le même ordre. Les 9 nouveaux tests (`test_score_dec.py`) vérifient les points de chaque critère, l'explication, la règle des 3 technologies, que chaque technologie du programme peut être trouvée dans une offre, et les nouvelles technologies (« XMLHttpRequest » n'est pas compté comme XML).
 
+### Vérification des données ouvertes (24 novembre)
+
+Recherche d'autres sources autorisées :
+
+| Source | Décision |
+|---|---|
+| [Données ouvertes du Guichet-Emplois](https://open.canada.ca/data/fr/dataset/ea639e28-c0fc-48bf-b5dd-b8899bd43072) (Emploi et Développement social Canada) | **Retenue.** [Licence du gouvernement ouvert – Canada](https://ouvert.canada.ca/fr/licence-du-gouvernement-ouvert-canada), un fichier CSV par mois depuis janvier 2023, sans compte ni clé |
+| [API d'Adzuna](https://developer.adzuna.com/docs/terms_of_service) | Possible pour la recherche personnelle ou académique, mais il faut un compte, une clé et le logo « Adzuna » sur chaque offre affichée. Le Canada n'est pas mentionné. Non ajoutée pour l'instant |
+| Jooble | Écartée : les conditions interdisent les robots et la republication |
+
+Essai sur le fichier d'octobre 2026 (59 130 offres au Canada) :
+- 197 offres TI au Québec avec nos 14 codes CNP. Salaire annuel médian : 70 000 $ ; horaire : 36 $. Ce sont les mêmes valeurs que notre propre collecte ;
+- pas d'employeur, pas de description et pas de lien vers l'offre : ces fichiers servent aux statistiques, pas à postuler ;
+- certaines offres sont mal classées par la source (« Work From Home Sales Consultant » avec un code TI). Elles sont comptées telles quelles ;
+- le fichier utilise les régions économiques. La région administrative est retrouvée à partir de la ville (`regions.py`), comme pour la collecte.
+
+Ce qui a été ajouté :
+- `donnees_ouvertes.py` trouve les fichiers avec l'API du portail. Le mois est lu dans le nom de la ressource, parce que les noms de fichiers changent (`oct2026`, `octobre2023`, `june-2024`…) ;
+- chaque fichier (UTF-16, tabulations) est lu en continu et n'est jamais enregistré. On garde seulement un résumé par mois dans `donnees-ouvertes.json` ;
+- dans l'onglet Statistiques, deux graphiques : les offres TI au Québec par mois et le salaire annuel médian par mois, avec la source et la mention de la licence.
+
+Ce que le vrai essai a trouvé : la ressource française d'avril 2026 n'a pas d'adresse sur le portail (seul le fichier anglais existe). La première lecture s'est arrêtée à ce mois. Après correction, un fichier sans adresse est ignoré, un mois en erreur n'arrête plus les autres, et la page écrit « Mois absent : avr. 2026 ». Résultat : 12 mois, d'octobre 2025 à octobre 2026, entre 99 offres (décembre 2025) et 333 (octobre 2025). Le salaire annuel médian varie de 60 000 $ à 80 000 $.
+
+Les 6 nouveaux tests (`test_donnees_ouvertes.py`) utilisent un faux portail et de petits faux fichiers UTF-16. Ils vérifient la lecture du mois dans le nom, le cas réel sans adresse, le filtre Québec et TI, les salaires (« NA » ignoré), les régions, les mois déjà lus qui ne sont pas retéléchargés, un mois en erreur qui n'arrête pas les autres, et la mention de la licence dans la page.
+
 ### Ce que les données montrent (17 novembre)
 
 - **Salaire médian** (valeur basse de la fourchette) : 70 000 $ par année (111 offres), 36 $ de l'heure (68 offres).
@@ -621,6 +648,8 @@ Vérifications : `python main.py --depuis offres.json --score-dec` et la page tr
 - **Dépendance au site :** si le Guichet-Emplois change ses classes CSS ou ses balises RDFa, il faudra adapter `guichet.py` et `fiches.py`. Les tests utilisent une copie du balisage de novembre 2026.
 
 - **Régions :** la région est trouvée à partir du nom de la ville. Un lieu qui n'est pas une municipalité ni un arrondissement (hameau, quartier, « Différentes régions ») reste sans région. Un nom porté par des municipalités de deux régions différentes reste aussi sans région, sans qu'on en choisisse une.
+
+- **Données ouvertes :** elles donnent une tendance mois par mois, pas des offres. Elles ne suivent pas les filtres de la page. Le Guichet-Emplois publie chaque mois avec quelques semaines de retard (octobre 2026 était le dernier mois le 24 novembre). Un mois sans fichier français est absent du graphique, et la page le dit.
 
 - **Score « étudiant du DEC » :** les poids (40, 30, 30) sont un choix simple, pas une mesure scientifique. La liste du programme est celle d'O'Sullivan de Québec : pour un autre cégep, il faut changer `programme_dec.json`. Les nouvelles technologies (jQuery, XML, SOAP) ne sont trouvées qu'à la prochaine collecte : `--depuis` relit les technologies déjà enregistrées dans `offres.json`.
 

@@ -28,10 +28,11 @@ from export import load_offers, write_csv
 from fiches import enrich_with_postings
 from filtres import Filters, filter_offers
 from fusion import aggregate_records
-from interface import write_html
+from interface import open_data_for_page, write_html
 from lettre import build_letter_report, check_letter, find_offer, letter_tips
 from texte import french_date
 from guichet import CNP_CODES_TI, GUICHET_DELAY_SECONDS, GUICHET_SEARCH_URL, fetch_guichet
+from donnees_ouvertes import DEFAULT_MONTHS, load_summary as load_open_data, update as update_open_data
 from historique import Changes, append_history, clean_cache, compare_with_previous, load_previous, read_history
 from score_dec import dec_score, load_program
 from semblables import republished, similar_groups
@@ -178,6 +179,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--sans-html",
         action="store_true",
         help="Ne pas recréer offres.html.",
+    )
+    sorties.add_argument(
+        "--donnees-ouvertes",
+        type=int,
+        nargs="?",
+        const=DEFAULT_MONTHS,
+        metavar="MOIS",
+        help="Lire les données ouvertes du Guichet-Emplois (un fichier d'environ 60 Mo par mois, lu en continu) "
+             f"pour la tendance des {DEFAULT_MONTHS} derniers mois dans l'onglet Statistiques. Les mois déjà lus sont gardés.",
     )
     sorties.add_argument(
         "--echantillon",
@@ -585,6 +595,13 @@ def main(argv: list[str] | None = None) -> None:
     # La page est recréée à chaque lancement, à côté du offres.json utilisé : il suffit
     # de rafraîchir le navigateur (F5) pour voir la dernière collecte.
     default_page = (args.depuis.parent if args.depuis else args.sortie.parent) / "offres.html"
+    open_data_file = default_page.parent / "donnees-ouvertes.json"
+    if args.donnees_ouvertes:
+        try:
+            update_open_data(open_data_file, months=args.donnees_ouvertes)
+        except (OSError, ValueError, KeyError) as error:
+            # Les offres et la page restent utilisables : seule la tendance manque.
+            print(f"ATTENTION : données ouvertes non lues ({error}). La tendance garde les mois déjà lus.")
     page, page_offers = None, offers
     if args.html is not None:
         page, page_offers = (default_page if args.html is True else args.html), selected
@@ -593,7 +610,10 @@ def main(argv: list[str] | None = None) -> None:
     if page is not None:
         # Onglet Statistiques : nombre d'offres à chaque jour de collecte (historique-collectes.csv).
         history = read_history(default_page.parent / "historique-collectes.csv")
-        write_html(page_offers, page, generated_on=collection_date, changes_text=changes_text, history=history)
+        # Tendance sur plusieurs mois (données ouvertes), si --donnees-ouvertes a déjà été lancé une fois.
+        open_data = load_open_data(open_data_file)
+        write_html(page_offers, page, generated_on=collection_date, changes_text=changes_text, history=history,
+                   trend=open_data_for_page(open_data))
         print(f"Page mise à jour : {page} ({len(page_offers)} offres). Rafraîchissez le navigateur (F5) si elle est déjà ouverte.")
 
 

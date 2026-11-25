@@ -189,6 +189,7 @@
   .ligne-barre .nom { overflow-wrap: anywhere; }
   .remplissage { display: block; height: 14px; min-width: 2px; background: var(--barre); border-radius: 0 4px 4px 0; }
   .valeur-barre { font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .graphique.large { grid-column: 1 / -1; }
   .colonnes { display: flex; align-items: flex-end; gap: 14px; height: 150px; padding-top: 20px; border-bottom: 1px solid var(--bord); }
   .colonne { flex: 1; max-width: 64px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; font-size: 13px; }
   .colonne .remplissage-col { width: 24px; min-height: 2px; background: var(--barre); border-radius: 4px 4px 0 0; }
@@ -419,6 +420,7 @@
 
 <script type="application/json" id="regles">{{REGLES}}</script>
 <script type="application/json" id="historique">{{HISTORIQUE}}</script>
+<script type="application/json" id="tendance">{{TENDANCE}}</script>
 <script>
 {{SCRIPT_CV}}
 {{SCRIPT_STATS}}
@@ -717,6 +719,27 @@
 
   // ---- Onglet Statistiques (calculs dans interface_stats.js, mêmes règles que analyse.py) ----
   const HISTORIQUE = JSON.parse(document.getElementById("historique").textContent);
+  const TENDANCE = JSON.parse(document.getElementById("tendance").textContent);
+  const formatMois = new Intl.DateTimeFormat("fr-CA", { month: "short", year: "numeric" });
+  const moisLisible = (m) => formatMois.format(new Date(m + "-01T00:00:00"));
+
+  // Colonnes verticales, une seule série : la valeur est écrite au-dessus de chaque colonne.
+  function colonnes(fig, points) {
+    const max = Math.max(...points.map((p) => p.valeur), 1);
+    const zone = element("div", "colonnes"), etiquettes = element("div", "dates-colonnes");
+    for (const p of points) {
+      const col = element("div", "colonne");
+      col.title = p.titre;
+      col.tabIndex = 0;
+      col.setAttribute("aria-label", p.titre);
+      const barre = element("div", "remplissage-col");
+      barre.style.height = `${(p.valeur / max) * 100}%`;
+      col.append(element("span", "valeur-barre", p.texte), barre);
+      zone.append(col);
+      etiquettes.append(element("span", "", p.etiquette));
+    }
+    fig.append(zone, etiquettes);
+  }
   let vue = "liste";
   const argent = (v) => `${nombre.format(v)} $`;
 
@@ -816,24 +839,58 @@
 
     fig = graphique("Offres en ligne à chaque collecte", "Toutes les offres (sans filtre), dernière collecte de chaque jour");
     if (HISTORIQUE.length >= 2) {
-      const max = Math.max(...HISTORIQUE.map((h) => h.offres), 1);
-      const colonnes = element("div", "colonnes"), dates = element("div", "dates-colonnes");
-      for (const h of HISTORIQUE) {
-        const col = element("div", "colonne");
-        col.title = `${dateLisible(h.date)} : ${h.offres} annonces${h.erreurs ? " (collecte avec erreurs)" : ""}`;
-        col.tabIndex = 0;
-        col.setAttribute("aria-label", col.title);
-        const barre = element("div", "remplissage-col");
-        barre.style.height = `${(h.offres / max) * 100}%`;
-        col.append(element("span", "valeur-barre", String(h.offres)), barre);
-        colonnes.append(col);
-        dates.append(element("span", "", dateLisible(h.date).replace(/ [0-9]{4}$/, "")));
-      }
-      fig.append(colonnes, dates);
+      colonnes(fig, HISTORIQUE.map((h) => ({
+        valeur: h.offres, texte: String(h.offres), etiquette: dateLisible(h.date).replace(/ [0-9]{4}$/, ""),
+        titre: `${dateLisible(h.date)} : ${h.offres} annonces${h.erreurs ? " (collecte avec erreurs)" : ""}`,
+      })));
     } else {
       fig.append(element("p", "sous", "Ce graphique apparaît après au moins deux jours de collecte (historique-collectes.csv)."));
     }
     figures.push(fig);
+
+    // Tendance sur plusieurs mois : données ouvertes du Guichet-Emplois (python main.py --donnees-ouvertes).
+    if (TENDANCE.mois && TENDANCE.mois.length) {
+      const source = () => {
+        const p = element("p", "sous");
+        p.append(document.createTextNode("Source : "));
+        p.append(lienSur(TENDANCE.page, "données ouvertes du Guichet-Emplois") || document.createTextNode("données ouvertes du Guichet-Emplois"));
+        p.append(document.createTextNode(" (Emploi et Développement social Canada). " + TENDANCE.attribution + " "));
+        p.append(lienSur(TENDANCE.licence_url, "Voir la licence") || document.createTextNode(""));
+        return p;
+      };
+      fig = graphique("Offres TI au Québec, mois par mois",
+        "Toutes les offres TI publiées au Québec sur le Guichet-Emplois chaque mois (mêmes 14 codes CNP que la collecte). Ces chiffres ne suivent pas les filtres de gauche.");
+      fig.classList.add("large");
+      colonnes(fig, TENDANCE.mois.map((m) => ({
+        valeur: m.offres, texte: String(m.offres), etiquette: moisLisible(m.mois),
+        titre: `${moisLisible(m.mois)} : ${m.offres} offres, ${m.postes} postes`,
+      })));
+      // Un mois sans fichier sur le portail (ex. avril 2026) ne doit pas passer inaperçu entre deux colonnes.
+      const presents = new Set(TENDANCE.mois.map((m) => m.mois)), absents = [];
+      for (let d = new Date(TENDANCE.mois[0].mois + "-01T00:00:00"); ; d.setMonth(d.getMonth() + 1)) {
+        const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (m > TENDANCE.mois[TENDANCE.mois.length - 1].mois) break;
+        if (!presents.has(m)) absents.push(moisLisible(m));
+      }
+      if (absents.length) {
+        fig.append(element("p", "sous", `Mois absent${absents.length > 1 ? "s" : ""} : ${absents.join(", ")} (pas de fichier en français sur le portail des données ouvertes).`));
+      }
+      fig.append(source());
+      figures.push(fig);
+
+      const avecSalaire = TENDANCE.mois.filter((m) => m.salaire_annuel.mediane !== null && m.salaire_annuel.offres >= 10);
+      if (avecSalaire.length) {
+        fig = graphique("Salaire annuel médian des offres TI au Québec, mois par mois",
+          "Valeur basse de la fourchette, salaires annuels seulement. Un mois avec moins de 10 salaires n'est pas montré.");
+        fig.classList.add("large");
+        colonnes(fig, avecSalaire.map((m) => ({
+          valeur: m.salaire_annuel.mediane, texte: `${Math.round(m.salaire_annuel.mediane / 1000)} k$`, etiquette: moisLisible(m.mois),
+          titre: `${moisLisible(m.mois)} : ${argent(m.salaire_annuel.mediane)} (${m.salaire_annuel.offres} offres avec un salaire annuel)`,
+        })));
+        fig.append(source());
+        figures.push(fig);
+      }
+    }
     $("stats-graphiques").replaceChildren(...figures);
   }
 

@@ -48,7 +48,7 @@ python -m unittest discover -p "test_*.py" -v
 
 ## Sources et règles
 
-- **Sources :** le [Guichet-Emplois](https://www.guichetemplois.gc.ca/) (et les offres de ses partenaires) et l'API publique de [Remotive](https://remotive.com/).
+- **Sources :** le [Guichet-Emplois](https://www.guichetemplois.gc.ca/) (et les offres de ses partenaires) et l'API publique de [Remotive](https://remotive.com/). Pour la tendance sur 12 mois : les [données ouvertes du Guichet-Emplois](https://open.canada.ca/data/fr/dataset/ea639e28-c0fc-48bf-b5dd-b8899bd43072). Contient des informations visées par la Licence du gouvernement ouvert – Canada.
 - **Respect des sites :** 5 s entre deux requêtes au Guichet-Emplois (`robots.txt`), et Remotive au plus une fois par jour.
 - **Sites écartés :** Québec emploi et Jobboom ne sont pas collectés, parce que leurs conditions d'utilisation l'interdisent.
 - **Rien n'est deviné :** une information absente d'une offre reste vide.
