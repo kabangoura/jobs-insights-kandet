@@ -186,7 +186,7 @@ class PowerShellScriptTests(unittest.TestCase):
 
     def test_regular_script_cleans_cache_and_updates_page(self) -> None:
         script = (Path(__file__).resolve().parent / "collecte-reguliere.ps1").read_text(encoding="utf-8-sig")
-        self.assertIn('"--nettoyer-cache", "--html"', script)
+        self.assertIn('"--nettoyer-cache", "--html", "--resume-seulement", "--nouveautes"', script)
 
 
 if __name__ == "__main__":

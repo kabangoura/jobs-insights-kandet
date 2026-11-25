@@ -34,6 +34,7 @@ from texte import french_date
 from guichet import CNP_CODES_TI, GUICHET_DELAY_SECONDS, GUICHET_SEARCH_URL, fetch_guichet
 from donnees_ouvertes import DEFAULT_MONTHS, load_summary as load_open_data, update as update_open_data
 from historique import Changes, append_history, clean_cache, compare_with_previous, load_previous, read_history
+from nouveautes import build_summary as build_news_summary
 from score_dec import dec_score, load_program
 from semblables import republished, similar_groups
 from modele import AggregatedOffer, SourceRecord
@@ -129,6 +130,9 @@ def build_parser() -> argparse.ArgumentParser:
     cv = parser.add_argument_group("aide à la candidature (le CV reste sur l'ordinateur)")
     cv.add_argument("--cv", type=Path, help="CV en .docx ou .txt : classe les offres affichées selon ce CV.")
     cv.add_argument("--nb-offres", type=int, default=10, help="Nombre d'offres à montrer avec --cv ou --score-dec (défaut : 10).")
+    cv.add_argument("--nouveautes", action="store_true",
+                    help="Résumé des nouvelles offres depuis la collecte précédente : nouveaux stages, offres proches "
+                         "du CV (avec --cv), puis les autres par score DEC. Enregistré dans rapport-nouveautes.md.")
     cv.add_argument("--score-dec", action="store_true",
                     help="Classer les offres affichées selon le score « étudiant du DEC » (stage, niveau, technologies vues au DEC).")
     cv.add_argument(
@@ -492,6 +496,27 @@ def print_dec_ranking(offers: list[AggregatedOffer], count: int) -> None:
     print(f"Liste des technologies du programme : {program['source']}")
 
 
+def previous_date_from_file(path: Path) -> str | None:
+    """Date de la collecte précédente, écrite dans un offres.json (ou None)."""
+    try:
+        changes = json.loads(path.read_text(encoding="utf-8")).get("changes_since_previous")
+        return str(changes["previous_generated_at"]) if changes else None
+    except (OSError, ValueError, AttributeError, TypeError, KeyError):
+        return None
+
+
+def write_news_summary(args: argparse.Namespace, offers: list[AggregatedOffer], previous_date: str | None) -> None:
+    """Résumé des nouvelles offres (nouveautes.py) : à l'écran et dans rapport-nouveautes.md."""
+    profile = build_profile(read_cv(args.cv)) if args.cv else None
+    text = build_news_summary(offers, previous_date, load_program()["technologies"], profile,
+                              args.cv.name if args.cv else "", top=args.nb_offres)
+    print()
+    print(text)
+    path = (args.depuis.parent if args.depuis else args.sortie.parent) / "rapport-nouveautes.md"
+    path.write_text(text, encoding="utf-8")
+    print(f"Résumé enregistré dans : {path} (fichier personnel, jamais envoyé dans Git)")
+
+
 def changes_text_from_file(path: Path, offers: list[AggregatedOffer]) -> str:
     """Phrase sur les nouveautés, lue dans un offres.json (option --depuis)."""
     try:
@@ -548,6 +573,7 @@ def main(argv: list[str] | None = None) -> None:
         report = None
         collection_date = collected_on(args.depuis)
         changes_text = changes_text_from_file(args.depuis, offers)
+        previous_date = previous_date_from_file(args.depuis)
         print(f"{len(offers)} offres relues depuis {args.depuis} (aucun téléchargement).")
     else:
         offers, report = collect(args)
@@ -557,6 +583,7 @@ def main(argv: list[str] | None = None) -> None:
         changes = compare_with_previous(previous, offers) if previous else None
         report["changes"] = changes
         changes_text = ""
+        previous_date = changes.previous_date if changes else None
         if changes:
             print_changes(changes, bool(report["errors"]))
             changes_text = describe_changes(offers, changes.previous_date)
@@ -589,6 +616,8 @@ def main(argv: list[str] | None = None) -> None:
         clean_cache_after_collection(args, offers, report)
     if args.score_dec:
         print_dec_ranking(selected, args.nb_offres)
+    if args.nouveautes:
+        write_news_summary(args, selected, previous_date)
     if args.csv:
         write_csv(selected, args.csv)
         print(f"CSV pour Excel enregistré dans : {args.csv} ({len(selected)} offres)")

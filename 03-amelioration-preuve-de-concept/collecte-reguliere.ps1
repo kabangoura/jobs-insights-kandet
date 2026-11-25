@@ -27,7 +27,7 @@ $debut = Get-Date
 Add-Content -Path $journal -Encoding UTF8 -Value "`r`n===== Collecte du $($debut.ToString('yyyy-MM-dd HH:mm')) ====="
 
 $processus = Start-Process -FilePath $commande.Source `
-    -ArgumentList @("main.py", "--nettoyer-cache", "--html", "--resume-seulement") `
+    -ArgumentList @("main.py", "--nettoyer-cache", "--html", "--resume-seulement", "--nouveautes") `
     -WorkingDirectory $dossier -NoNewWindow -Wait -PassThru `
     -RedirectStandardOutput $sortie -RedirectStandardError $erreurs
 
@@ -41,6 +41,7 @@ $duree = [int]((Get-Date) - $debut).TotalSeconds
 if ($processus.ExitCode -eq 0) {
     Add-Content -Path $journal -Encoding UTF8 -Value "Terminée sans erreur en $duree s."
     Write-Host "Collecte terminée en $duree s. Détails : $journal"
+    Write-Host "Nouvelles offres (stages en premier) : $(Join-Path $dossier 'rapport-nouveautes.md')"
 } else {
     Add-Content -Path $journal -Encoding UTF8 -Value "ÉCHEC (code $($processus.ExitCode)) après $duree s."
     Write-Host "La collecte a échoué. Voir : $journal"

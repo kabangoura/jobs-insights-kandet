@@ -404,6 +404,10 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - essai sur octobre 2026 : 197 offres TI au Québec, mêmes salaires médians que notre collecte, mais ni employeur ni description, donc des statistiques seulement ;
   - ajout : `donnees_ouvertes.py`, option `--donnees-ouvertes`, deux graphiques de tendance sur 12 mois dans l'onglet Statistiques. Un vrai défaut corrigé : la ressource française d'avril 2026 n'a pas d'adresse ;
   - 6 nouveaux tests dans `test_donnees_ouvertes.py` ; au total, 238 tests OK.
+- **Résumé des nouveautés ✅ (24 novembre)** :
+  - essai d'abord : avec le CV seulement, le seul nouveau stage (sans technologie) n'apparaissait pas ;
+  - ajout : `nouveautes.py`, option `--nouveautes` (stages, puis offres proches du CV, puis score DEC), `rapport-nouveautes.md`, ajouté au script `collecte-reguliere.ps1` ;
+  - 9 nouveaux tests dans `test_nouveautes.py` ; au total, 249 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.
 - **Remotive** : l'API publique ne donne que 14 offres, presque toutes hors Québec (télétravail Canada ou international). Elle reste une source d'appoint. Pour avoir plus d'offres québécoises hors Guichet-Emplois, Jobboom est la meilleure piste : JSON-LD sur chaque fiche, déjà testé par Elvira, Mamadou et Gregory.

@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 238 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 249 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -143,7 +143,12 @@ python main.py --nettoyer-cache --html --resume-seulement
 - **compare avec la collecte précédente** : « 24 nouvelle(s) offre(s), 24 disparue(s) (dont 13 retirée(s) avant leur date limite) ». Le détail est dans `offres.json` (`changes_since_previous`) ;
 - **marque les nouvelles offres** : badge « Nouvelle » dans `offres.html`, case « Nouvelles offres seulement » dans les filtres, et phrase en haut de la page (« 24 nouvelles offres depuis la collecte du 17 novembre 2026 ») ;
 - **ajoute une ligne à `historique-collectes.csv`** (date, offres, nouvelles, disparues…), qui s'ouvre dans Excel ;
-- **avec `--nettoyer-cache`**, retire du cache les fiches des offres disparues. Il le fait seulement après une collecte complète et sans erreur, pour ne rien effacer par erreur.
+- **avec `--nettoyer-cache`**, retire du cache les fiches des offres disparues. Il le fait seulement après une collecte complète et sans erreur, pour ne rien effacer par erreur ;
+- **avec `--nouveautes`**, écrit un résumé des nouvelles offres dans `rapport-nouveautes.md` : d'abord les nouveaux stages, puis les offres proches du CV (avec `--cv mon-cv.docx`), puis les autres, classées par score « étudiant du DEC ». Le script `collecte-reguliere.ps1` le fait à chaque collecte (sans CV).
+
+```powershell
+python main.py --depuis offres.json --nouveautes --cv mon-cv.docx   # résumé avec son CV, sans nouvelle collecte
+```
 
 **Collecte automatique avec Windows :**
 
@@ -184,6 +189,7 @@ python main.py --depuis offres.json --techno SQL --ville Montréal --csv
 | `--sans-html` | Ne pas recréer `offres.html` |
 | `--resume-seulement` | Affiche les statistiques sans la liste |
 | `--donnees-ouvertes` | Lit les données ouvertes du Guichet-Emplois pour la tendance des 12 derniers mois dans l'onglet Statistiques (`--donnees-ouvertes 24` pour 24 mois). La première fois, environ 12 fichiers de 60 Mo sont lus en continu, sans être enregistrés (quelques minutes). Ensuite, seuls les nouveaux mois sont lus |
+| `--nouveautes` | Résumé des nouvelles offres depuis la collecte précédente (stages, offres proches du CV avec `--cv`, puis les autres par score DEC), enregistré dans `rapport-nouveautes.md` |
 | `--score-dec` | Classe les offres affichées selon le score « étudiant du DEC », avec l'explication de chaque score (`--nb-offres` pour en voir plus que 10) |
 
 Les filtres changent ce qui est affiché, ce qui va dans le CSV et ce qui va dans la page HTML. `offres.json` garde toujours toutes les offres.
@@ -200,6 +206,7 @@ La liste complète des options s'obtient avec `python main.py --help`.
 | `echantillon.json` | 10 offres d'exemple | Oui |
 | `cv-exemple.txt` | CV fictif pour essayer l'aide à la candidature | Oui |
 | `rapport-candidature.md` | Classement des offres selon un CV, avec les suggestions | Non |
+| `rapport-nouveautes.md` | Résumé des nouvelles offres (`--nouveautes`) | Non |
 | `lettre-exemple.txt` | Lettre fictive pour essayer la vérification de lettre | Oui |
 | `rapport-lettre.md` | Vérification d'une lettre pour une offre | Non |
 | `historique-collectes.csv` | Une ligne par collecte : offres, nouvelles, disparues | Non |
@@ -332,7 +339,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (238 tests)
+# Tests hors ligne (249 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -359,7 +366,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 238 |
+| Tests hors ligne | 33 | 249 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -620,6 +627,14 @@ Ce qui a été ajouté :
 Ce que le vrai essai a trouvé : la ressource française d'avril 2026 n'a pas d'adresse sur le portail (seul le fichier anglais existe). La première lecture s'est arrêtée à ce mois. Après correction, un fichier sans adresse est ignoré, un mois en erreur n'arrête plus les autres, et la page écrit « Mois absent : avr. 2026 ». Résultat : 12 mois, d'octobre 2025 à octobre 2026, entre 99 offres (décembre 2025) et 333 (octobre 2025). Le salaire annuel médian varie de 60 000 $ à 80 000 $.
 
 Les 6 nouveaux tests (`test_donnees_ouvertes.py`) utilisent un faux portail et de petits faux fichiers UTF-16. Ils vérifient la lecture du mois dans le nom, le cas réel sans adresse, le filtre Québec et TI, les salaires (« NA » ignoré), les régions, les mois déjà lus qui ne sont pas retéléchargés, un mois en erreur qui n'arrête pas les autres, et la mention de la licence dans la page.
+
+### Vérification du résumé des nouveautés (24 novembre)
+
+Essai d'abord sur la collecte du 24 novembre : 14 nouvelles offres depuis le 23 novembre. Classées seulement avec le CV fictif (`cv-exemple.txt`), 7 recevaient une note, mais le stage de Revenu Québec n'apparaissait pas : il ne cite aucune technologie, donc la comparaison avec le CV ne peut pas le noter. Le résumé a donc trois parties : les nouveaux stages toujours en premier, puis les offres proches du CV (note d'au moins 40), puis les autres par score DEC. Chaque offre a son lien.
+
+Résultat avec le CV fictif : le stage de Revenu Québec en premier (score DEC 70), puis « analyste commercial en informatique » chez IMDS Software (note 61, en commun : Python, C#, HTML/CSS, SQL), puis les autres.
+
+`rapport-nouveautes.md` peut contenir des informations tirées du CV : il est ignoré par Git (`rapport-*.md`). Les 9 nouveaux tests (`test_nouveautes.py`) vérifient les republications et les annonces semblables, le stage sans technologie en premier, la partie CV, le cas sans collecte précédente, la liste coupée, et deux collectes simulées de suite avec `--nouveautes`.
 
 ### Ce que les données montrent (17 novembre)
 

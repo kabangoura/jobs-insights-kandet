@@ -27,6 +27,8 @@ Ouvrez ensuite **`offres.html`** d'un double-clic. Elle est recréée à chaque 
 - suivre vos candidatures (statut, note) dans l'onglet « Mes candidatures » ;
 - trier les offres selon un score « étudiant du DEC » (stage, niveau débutant, technologies vues au DEC).
 
+Après chaque collecte, `python main.py --depuis offres.json --nouveautes` résume les nouvelles offres (stages en premier) dans `rapport-nouveautes.md`. Ajoutez `--cv mon-cv.docx` pour voir celles qui sont proches de votre CV.
+
 Le CV et la lettre restent dans le navigateur : rien n'est envoyé.
 
 Pour vérifier que tout fonctionne (environ 1 seconde, sans Internet) :
