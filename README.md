@@ -24,7 +24,8 @@ Ouvrez ensuite **`offres.html`** d'un double-clic. Elle est recréée à chaque 
 - comparer les offres avec votre CV ;
 - vérifier votre lettre pour une offre ;
 - voir des statistiques (salaires, régions, technologies…) dans l'onglet « Statistiques » ;
-- suivre vos candidatures (statut, note) dans l'onglet « Mes candidatures ».
+- suivre vos candidatures (statut, note) dans l'onglet « Mes candidatures » ;
+- trier les offres selon un score « étudiant du DEC » (stage, niveau débutant, technologies vues au DEC).
 
 Le CV et la lettre restent dans le navigateur : rien n'est envoyé.
 

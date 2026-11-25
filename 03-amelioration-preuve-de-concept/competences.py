@@ -67,6 +67,10 @@ TECHNOLOGY_PATTERNS = [
     ("ServiceNow", r"\bservicenow\b"),
     ("Jira", r"\bjira\b"),
     ("API REST", r"\brest(?:ful)?\s*api|\bapi\s+rest"),
+    # Vus au DEC d'O'Sullivan de Québec (programme_dec.json) et présents dans les offres du 24 novembre 2026.
+    ("jQuery", r"\bjquery\b"),
+    ("XML", r"\bxml\b"),
+    ("SOAP", r"\bsoap\b"),
     ("Machine learning", r"\bmachine\s+learning\b|\bapprentissage\s+(?:automatique|machine)\b"),
 ]
 TECHNOLOGY_REGEXES = [(name, re.compile(pattern, re.IGNORECASE)) for name, pattern in TECHNOLOGY_PATTERNS]

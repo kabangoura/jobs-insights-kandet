@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from modele import AggregatedOffer
+from score_dec import dec_score, load_program
 from semblables import republished, similar_groups
 from texte import french_date
 
@@ -133,6 +134,12 @@ def build_html(offers: list[AggregatedOffer], generated_on: str | None = None, c
     for row, group, again in zip(rows, groups, republished(offers, groups)):
         row["groupe"] = group + 1  # numéro (id) de la première annonce du groupe
         row["republiee"] = again
+    # Score « étudiant du DEC » (score_dec.py), calculé ici une seule fois pour toute la page.
+    program = load_program()
+    for row, offer in zip(rows, offers):
+        score = dec_score(offer, program["technologies"])
+        row["scoreDec"] = score.total
+        row["scoreDecDetail"] = score.parts
     generated_on = generated_on or date.today().isoformat()
     template = TEMPLATE_FILE.read_text(encoding="utf-8")
     return (

@@ -394,8 +394,12 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - essai d'abord : dans Edge, le stockage d'une page locale est gardé après une nouvelle ouverture et après une nouvelle collecte (page recréée). Le lien de l'offre (numéro du Guichet-Emplois) la reconnaît d'une collecte à l'autre ;
   - ajout ensuite : `interface_suivi.js`, bouton « Suivre » et statut sur les cartes, filtre « Mes offres suivies seulement », onglet « Mes candidatures » avec note et export CSV ;
   - 7 nouveaux tests dans `test_interface_suivi.py` (Node.js, faux stockage) ; au total, 223 tests OK.
+- **Score « étudiant du DEC » ✅ (24 novembre)** :
+  - recherche d'abord : liste officielle des cours d'O'Sullivan de Québec (420.B0, développement d'applications), comparée avec Sorel-Tracy et Saint-Hyacinthe ;
+  - essai ensuite sur les 183 offres : classement sensé (stage de Revenu Québec en tête), un défaut corrigé (une seule technologie ne donne plus tous les points), jQuery, XML et SOAP ajoutés, Unity écarté (faux positifs) ;
+  - ajout : `programme_dec.json`, `score_dec.py`, score expliqué sur chaque carte, tri « Score étudiant du DEC », option `--score-dec` ;
+  - 9 nouveaux tests dans `test_score_dec.py` ; au total, 232 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
-- **Score de pertinence pour un étudiant du DEC** : règles simples et affichées (stage, niveau débutant, technologies vues au cours). Le score doit être expliqué, pas une note magique.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.
 - **Remotive** : l'API publique ne donne que 14 offres, presque toutes hors Québec (télétravail Canada ou international). Elle reste une source d'appoint. Pour avoir plus d'offres québécoises hors Guichet-Emplois, Jobboom est la meilleure piste : JSON-LD sur chaque fiche, déjà testé par Elvira, Mamadou et Gregory.
 

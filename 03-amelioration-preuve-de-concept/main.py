@@ -33,6 +33,7 @@ from lettre import build_letter_report, check_letter, find_offer, letter_tips
 from texte import french_date
 from guichet import CNP_CODES_TI, GUICHET_DELAY_SECONDS, GUICHET_SEARCH_URL, fetch_guichet
 from historique import Changes, append_history, clean_cache, compare_with_previous, load_previous, read_history
+from score_dec import dec_score, load_program
 from semblables import republished, similar_groups
 from modele import AggregatedOffer, SourceRecord
 from normalisation import normalize_record
@@ -126,7 +127,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     cv = parser.add_argument_group("aide à la candidature (le CV reste sur l'ordinateur)")
     cv.add_argument("--cv", type=Path, help="CV en .docx ou .txt : classe les offres affichées selon ce CV.")
-    cv.add_argument("--nb-offres", type=int, default=10, help="Nombre d'offres à montrer avec --cv (défaut : 10).")
+    cv.add_argument("--nb-offres", type=int, default=10, help="Nombre d'offres à montrer avec --cv ou --score-dec (défaut : 10).")
+    cv.add_argument("--score-dec", action="store_true",
+                    help="Classer les offres affichées selon le score « étudiant du DEC » (stage, niveau, technologies vues au DEC).")
     cv.add_argument(
         "--rapport-cv",
         type=Path,
@@ -461,6 +464,24 @@ def print_changes(changes: Changes, had_errors: bool) -> None:
         print("ATTENTION : la collecte a eu des erreurs. Certaines offres « disparues » sont peut-être encore en ligne.")
 
 
+def print_dec_ranking(offers: list[AggregatedOffer], count: int) -> None:
+    """Les offres les plus adaptées à un étudiant du DEC, avec l'explication de chaque score."""
+    program = load_program()
+    groups = similar_groups(offers)
+    ranked = []
+    for index, offer in enumerate(offers):
+        if groups[index] == index:  # une ligne par poste : les annonces semblables comptent une fois
+            ranked.append((dec_score(offer, program["technologies"]), offer))
+    ranked.sort(key=lambda item: (-item[0].total, item[1].title))
+    print()
+    print(f"Score « étudiant du DEC » ({program['nom']}) :")
+    for score, offer in ranked[:count]:
+        place = offer.city or offer.location or "lieu non précisé"
+        print(f"  {score.total:3}/100  {offer.original_title or offer.title} ({offer.employer or 'employeur non précisé'}, {place})")
+        print(f"          {' · '.join(score.parts)}")
+    print(f"Liste des technologies du programme : {program['source']}")
+
+
 def changes_text_from_file(path: Path, offers: list[AggregatedOffer]) -> str:
     """Phrase sur les nouveautés, lue dans un offres.json (option --depuis)."""
     try:
@@ -556,6 +577,8 @@ def main(argv: list[str] | None = None) -> None:
         print(f"Historique des collectes : {history}")
     if report is not None and args.nettoyer_cache:
         clean_cache_after_collection(args, offers, report)
+    if args.score_dec:
+        print_dec_ranking(selected, args.nb_offres)
     if args.csv:
         write_csv(selected, args.csv)
         print(f"CSV pour Excel enregistré dans : {args.csv} ({len(selected)} offres)")

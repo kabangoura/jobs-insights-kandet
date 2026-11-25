@@ -1,0 +1,10 @@
+{
+  "nom": "DEC Techniques de l'informatique (420.B0), profil développement d'applications, Collège O'Sullivan de Québec",
+  "source": "https://osullivan-quebec.qc.ca/dec-informatique/cours-dec-techniques-de-linformatique-420-b0/",
+  "consulte_le": "2026-11-24",
+  "note": "Technologies écrites dans la liste officielle des cours (lignes « Langages abordés » et description du cours Administration d'un serveur). Les noms sont ceux de competences.py. REST est reconnu sous le nom « API REST », et « C/C++ » donne C et C++. Les certifications Linux et Cisco et l'accès à SharePoint sont mentionnés sur la page du programme, mais pas dans un cours : ils ne sont pas comptés.",
+  "technologies": [
+    "Python", "C#", "SQL", "Java", "XML", "API REST", "SOAP", "PHP", "HTML/CSS",
+    "JavaScript", "Kotlin", "MySQL", "C", "C++", "jQuery", "Angular", "Windows"
+  ]
+}

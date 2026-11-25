@@ -203,6 +203,10 @@
   #suivi-resume { font-size: 14px; color: var(--doux); }
   #suivi-message { color: var(--rouge); }
   #suivi-message:empty { display: none; }
+  .score-dec { margin-top: 8px; font-size: 13.5px; color: var(--doux); }
+  .note-dec { font-weight: 600; padding: 1px 7px; border-radius: 6px; margin-right: 4px; color: var(--texte); background: var(--fond); border: 1px solid var(--bord); }
+  .note-dec.haute { background: var(--vert-fond); color: var(--vert); border-color: transparent; }
+  .note-dec.moyenne { background: var(--accent-fond); color: var(--accent); border-color: transparent; }
   .semblables { margin-top: 8px; font-size: 14px; color: var(--doux); }
   .semblables ul { margin: 4px 0 0; padding-left: 20px; }
   #compte small.annonces { font-weight: 400; color: var(--doux); font-size: 14px; }
@@ -327,6 +331,7 @@
         <option value="salaire">Salaire le plus élevé</option>
         <option value="expire">Expire bientôt</option>
         <option value="titre">Titre (A à Z)</option>
+        <option value="dec">Score étudiant du DEC</option>
         <option value="cv" id="tri-cv" hidden disabled>Correspondance avec mon CV</option>
       </select>
     </div>
@@ -541,6 +546,7 @@
     } else if (tri === "salaire") copie.sort((a, b) => salaireAnnuel(b) - salaireAnnuel(a) || (b.unite === "heure" ? (b.salMax ?? b.salMin) : -1) - (a.unite === "heure" ? (a.salMax ?? a.salMin) : -1));
     else if (tri === "expire") copie.sort((a, b) => (a.expire || "9999") .localeCompare(b.expire || "9999"));
     else if (tri === "titre") copie.sort((a, b) => a.titre.localeCompare(b.titre, "fr"));
+    else if (tri === "dec") copie.sort((a, b) => b.scoreDec - a.scoreDec || (b.publiee || "").localeCompare(a.publiee || ""));
     else copie.sort((a, b) => (b.publiee || "").localeCompare(a.publiee || ""));
     return copie;
   }
@@ -611,6 +617,11 @@
       else if (jours <= 7) badges.append(element("span", "badge bientot", `Expire dans ${jours} j`));
     }
     if (badges.children.length) art.append(badges);
+    // Score « étudiant du DEC » (score_dec.py) : chaque point est expliqué.
+    const dec = element("div", "score-dec");
+    dec.append(element("span", `note-dec ${o.scoreDec >= 60 ? "haute" : o.scoreDec >= 35 ? "moyenne" : "basse"}`, `Score DEC ${o.scoreDec}/100`));
+    dec.append(document.createTextNode(" " + o.scoreDecDetail.join(" · ")));
+    art.append(dec);
 
     if (comparaison) {
       const r = comparaison.get(o.id);
@@ -986,7 +997,7 @@
     const colonnes = [["titre", (o) => o.titre], ["profession_cnp", (o) => o.titreCnp], ["employeur", (o) => o.employeur],
       ["ville", (o) => o.ville], ["region", (o) => o.region], ["salaire_min", (o) => o.salMin], ["salaire_max", (o) => o.salMax],
       ["unite", (o) => o.unite], ["niveau", (o) => o.niveau], ["stage", (o) => o.stage], ["technologies", (o) => o.technos.join(", ")],
-      ["description_complete", (o) => (o.aDescription ? "oui" : "non")], ["publiee_le", (o) => o.publiee], ["expire_le", (o) => o.expire], ["lien", (o) => o.lien], ["lien_origine", (o) => o.lienOrigine]];
+      ["description_complete", (o) => (o.aDescription ? "oui" : "non")], ["score_dec", (o) => o.scoreDec], ["publiee_le", (o) => o.publiee], ["expire_le", (o) => o.expire], ["lien", (o) => o.lien], ["lien_origine", (o) => o.lienOrigine]];
     if (comparaison) {
       colonnes.splice(1, 0,
         ["note_cv", (o) => comparaison.get(o.id)?.note ?? ""],

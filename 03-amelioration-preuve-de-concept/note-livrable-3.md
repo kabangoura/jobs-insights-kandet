@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 223 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 232 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -74,6 +74,7 @@ Dans la page :
 - **« Copier le lien de cette recherche »** garde les filtres dans l'adresse de la page. Par exemple, `offres.html#region=Estrie&techno=SQL` rouvre la page avec ces filtres.
 - **Onglet « Statistiques »** (à côté de « Liste des offres ») : des graphiques calculés sur les offres affichées, donc ils suivent les filtres. On y trouve les salaires médians (annuel et horaire, jamais mélangés), les stages, les offres par région, les technologies, le niveau, le salaire selon le niveau, les professions et le nombre d'offres à chaque jour de collecte. Un clic sur une région, une technologie ou un niveau applique le filtre. `offres.html#vue=stats` ouvre directement cet onglet.
 - **Suivi de mes candidatures** : « ☆ Suivre cette offre » sur une carte, puis un statut (À postuler, Postulé, Entrevue, Offre reçue, Refusé, Abandonné). L'onglet « Mes candidatures » liste les offres suivies avec une note (contact, date d'entrevue…), et le bouton « Exporter mon suivi (CSV) » les enregistre pour Excel. Le suivi reste dans le navigateur de l'ordinateur (`localStorage`) : rien n'est envoyé. Il est gardé quand `main.py` recrée la page. Une offre qui disparaît d'une collecte reste dans le suivi, avec la mention « N'est plus dans la dernière collecte ».
+- **Score « étudiant du DEC »** sur chaque carte, sur 100, avec le détail des points : stage confirmé (+40, possible +20), niveau débutant (+30, non précisé +15, intermédiaire +10), technologies vues au DEC (jusqu'à +30). Le tri « Score étudiant du DEC » met en premier les offres les plus adaptées à un étudiant en fin de DEC.
 - La page s'adapte au téléphone (filtres repliables) et au mode sombre.
 - **« Comparer les offres avec mon CV »** (en haut des résultats) :
   - choisir un CV en `.docx` ou en `.txt`, ou coller son texte ;
@@ -182,6 +183,7 @@ python main.py --depuis offres.json --techno SQL --ville Montréal --csv
 | `--html` | Met dans `offres.html` seulement les offres affichées par les filtres (sans cette option, la page contient toutes les offres) |
 | `--sans-html` | Ne pas recréer `offres.html` |
 | `--resume-seulement` | Affiche les statistiques sans la liste |
+| `--score-dec` | Classe les offres affichées selon le score « étudiant du DEC », avec l'explication de chaque score (`--nb-offres` pour en voir plus que 10) |
 
 Les filtres changent ce qui est affiché, ce qui va dans le CSV et ce qui va dans la page HTML. `offres.json` garde toujours toutes les offres.
 
@@ -328,7 +330,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (223 tests)
+# Tests hors ligne (232 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -355,7 +357,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 223 |
+| Tests hors ligne | 33 | 232 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -581,6 +583,17 @@ Vérifications :
 - capture de l'onglet avec une offre en entrevue et une offre fictive disparue (badges « N'est plus dans la dernière collecte » et « Expirée ») ;
 - les 7 nouveaux tests (`test_interface_suivi.py`) utilisent Node.js avec un faux stockage. Ils vérifient la relecture après une nouvelle ouverture, un statut inconnu refusé, un stockage abîmé (la page repart d'un suivi vide sans planter), un stockage bloqué (le message s'affiche), l'export CSV (une note qui commence par `=` n'est pas lue comme une formule par Excel), et l'absence de toute requête réseau dans la page.
 
+### Vérification du score « étudiant du DEC » (24 novembre)
+
+Les technologies du programme viennent de la [liste officielle des cours](https://osullivan-quebec.qc.ca/dec-informatique/cours-dec-techniques-de-linformatique-420-b0/) du DEC 420.B0 d'O'Sullivan de Québec (profil développement d'applications), lignes « Langages abordés ». Elles sont dans `programme_dec.json`, avec la source et la date. Pour comparer, j'ai aussi lu les grilles du Cégep de Sorel-Tracy (Web et mobile) et du Cégep de Saint-Hyacinthe (développement de logiciels, réseaux et cybersécurité). On y retrouve la même base : SQL, Java ou C#, HTML/CSS/JavaScript, PHP et le mobile. Le Collège O'Sullivan de Montréal est un autre établissement, avec un DEC en réseaux et cybersécurité : il n'est pas utilisé.
+
+Essai d'abord sur la collecte du 24 novembre :
+- 16 technologies du programme étaient déjà reconnues. jQuery (8 offres), XML (5) et SOAP (3) ont été ajoutés à `competences.py`. Unity n'a pas été ajouté : les 3 offres trouvées parlaient de « Unity Catalog » (données), pas du moteur de jeu ;
+- premier classement : le stage de Revenu Québec en tête (70), puis des postes débutants en Java, C#, SQL, Angular (60), et les postes d'architecte senior en bas (0) ;
+- défaut trouvé : une offre qui ne cite que « Windows » recevait les 30 points des technologies, autant qu'une offre avec Java, HTML/CSS et Angular. On compte maintenant au moins 3 technologies : « Windows » seul donne 10 points.
+
+Vérifications : `python main.py --depuis offres.json --score-dec` et la page triée par score donnent le même ordre. Les 9 nouveaux tests (`test_score_dec.py`) vérifient les points de chaque critère, l'explication, la règle des 3 technologies, que chaque technologie du programme peut être trouvée dans une offre, et les nouvelles technologies (« XMLHttpRequest » n'est pas compté comme XML).
+
 ### Ce que les données montrent (17 novembre)
 
 - **Salaire médian** (valeur basse de la fourchette) : 70 000 $ par année (111 offres), 36 $ de l'heure (68 offres).
@@ -609,6 +622,8 @@ Vérifications :
 
 - **Régions :** la région est trouvée à partir du nom de la ville. Un lieu qui n'est pas une municipalité ni un arrondissement (hameau, quartier, « Différentes régions ») reste sans région. Un nom porté par des municipalités de deux régions différentes reste aussi sans région, sans qu'on en choisisse une.
 
+- **Score « étudiant du DEC » :** les poids (40, 30, 30) sont un choix simple, pas une mesure scientifique. La liste du programme est celle d'O'Sullivan de Québec : pour un autre cégep, il faut changer `programme_dec.json`. Les nouvelles technologies (jQuery, XML, SOAP) ne sont trouvées qu'à la prochaine collecte : `--depuis` relit les technologies déjà enregistrées dans `offres.json`.
+
 - **Suivi des candidatures :** il est gardé dans un seul navigateur, sur un seul ordinateur. Il disparaît si on efface les données du navigateur et il n'existe pas en navigation privée : il faut l'exporter de temps en temps. Il a été vérifié dans Edge seulement. Firefox traite les pages locales autrement et peut ne pas garder le suivi.
 
 - **Statistiques :** les médianes portent sur la valeur basse de la fourchette de salaire. Avec un filtre, certains graphiques ont peu d'offres : le nombre d'offres est toujours écrit à côté de la médiane, et le salaire d'un niveau n'est pas montré s'il y a moins de 3 salaires. L'historique ne commence que le 20 novembre.
@@ -618,7 +633,7 @@ Vérifications :
 - **Page HTML :** c'est une copie des offres au moment de sa création. Elle est recréée à chaque lancement de `main.py`, mais une page déjà ouverte ne change qu'après un rafraîchissement (F5). Le bouton « Copier le lien » demande l'accès au presse-papiers : certains navigateurs le refusent pour un fichier ouvert en local, et la page affiche alors « Copiez l'adresse de la page ».
 
 - **Aide à la candidature :**
-  - la note vient de règles simples. Elle ne comprend que les technologies et compétences de nos listes (51 et 14), écrites clairement dans le CV ;
+  - la note vient de règles simples. Elle ne comprend que les technologies et compétences de nos listes (54 et 14), écrites clairement dans le CV ;
   - 70 offres sur 195 ne listent ni technologie ni compétence : elles ne sont pas classées, et le programme le dit ;
   - pas de PDF : il faut enregistrer le CV en `.docx` ;
   - les suggestions aident à savoir quoi mettre en avant, mais il faut toujours relire l'offre complète.

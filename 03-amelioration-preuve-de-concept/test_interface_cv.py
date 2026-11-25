@@ -87,7 +87,7 @@ class RulesInPageTests(unittest.TestCase):
         self.assertIsNotNone(match)
         rules = json.loads(match.group(1))
         self.assertEqual(rules, json.loads(json.dumps(browser_rules())))
-        self.assertEqual(len(rules["technologies"]), 51)
+        self.assertEqual(len(rules["technologies"]), 54)
 
     def test_script_is_included_and_safe(self) -> None:
         page = build_html(OFFERS, generated_on="2026-11-20")
