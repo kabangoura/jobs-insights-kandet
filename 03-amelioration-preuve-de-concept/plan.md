@@ -420,6 +420,9 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
 - **Filtre « Mode de travail » ✅ (25 novembre)** :
   - essai d'abord : mode écrit pour 158 offres sur 365 ; champ précis de Lever pas encore utilisé ; descriptions trop vagues pour décider ;
   - ajout : `work_mode_of` (champ de la source, sinon lieu ou titre), filtre, graphique et colonne CSV ; 5 nouveaux tests ; au total, 266 tests OK.
+- **Doublons entre sources ✅ (26 novembre)** :
+  - essai : aucun doublon entre les sources dans la collecte du 25 novembre ;
+  - correction de `fusion.py` : titre de l'employeur et ville, pour reconnaître une même offre sur le Guichet-Emplois et sur la page carrières ; un défaut de l'ancienne règle corrigé au passage (fusions à tort sur le titre CNP) ; 4 nouveaux tests ; au total, 270 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.
 - **Remotive** : l'API publique ne donne que 14 offres, presque toutes hors Québec (télétravail Canada ou international). Elle reste une source d'appoint. Pour avoir plus d'offres québécoises hors Guichet-Emplois, Jobboom est la meilleure piste : JSON-LD sur chaque fiche, déjà testé par Elvira, Mamadou et Gregory.

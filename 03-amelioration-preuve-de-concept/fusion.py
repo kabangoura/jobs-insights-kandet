@@ -26,24 +26,44 @@ def _same_source_record(left: SourceRecord, right: SourceRecord) -> bool:
     return bool(left.url and right.url and left.url.casefold() == right.url.casefold())
 
 
-def _identity(record: SourceRecord) -> tuple[str, str, str]:
+def _employer_title(record: SourceRecord) -> str:
+    """Titre écrit par l'employeur. Sur le Guichet-Emplois, `title` est le titre CNP."""
+    return record.original_title or ("" if record.source == "Guichet-Emplois" else record.title)
+
+
+def _identity(left: SourceRecord, right: SourceRecord) -> tuple[tuple[str, str, str], tuple[str, str, str]]:
+    """Ce qu'on compare pour deux annonces (vérifié le 25 novembre 2026 sur 366 annonces).
+
+    - Le titre de l'employeur si les deux en ont un : une offre Levio sur le Guichet-Emplois
+      (titre CNP « analyste en informatique ») et sur Greenhouse (« Développeur.euse Java »).
+      Sinon le titre CNP, comme avant (annonce directe du Guichet et sa copie de Québec emploi).
+    - La ville si les deux villes sont connues : « Montréal (QC) » et « Montréal, Quebec, Canada ».
+    """
+    if _employer_title(left) and _employer_title(right):
+        titles = _employer_title(left), _employer_title(right)
+    else:
+        titles = left.title, right.title
+    if left.city and right.city:
+        places = left.city, right.city
+    else:
+        places = left.location, right.location
     return (
-        normalize(record.title),
-        normalize(record.employer),
-        normalize(record.location),
+        (normalize(titles[0]), normalize(left.employer), normalize(places[0])),
+        (normalize(titles[1]), normalize(right.employer), normalize(places[1])),
     )
 
 
 def _republished_match(left: SourceRecord, right: SourceRecord) -> bool:
-    """Même offre publiée par deux sites différents (ex. Jobillico et Talent.com).
+    """Même offre publiée par deux sites différents (ex. Jobillico et Talent.com, ou le
+    Guichet-Emplois et la page carrières de l'employeur).
 
     Deux annonces d'un même site ne sont jamais fusionnées sur le titre seul :
     un employeur peut afficher plusieurs postes identiques.
     """
     if _publisher(left) == _publisher(right):
         return False
-    identity = _identity(left)
-    return all(identity) and identity == _identity(right)
+    first, second = _identity(left, right)
+    return all(first) and first == second
 
 
 def _new_aggregated_offer(record: SourceRecord) -> AggregatedOffer:

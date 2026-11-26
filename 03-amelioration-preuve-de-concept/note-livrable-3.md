@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 266 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 270 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -350,7 +350,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (266 tests)
+# Tests hors ligne (270 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -377,7 +377,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 266 |
+| Tests hors ligne | 33 | 270 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -692,6 +692,16 @@ Essai d'abord sur les 365 offres :
 - les descriptions parlent souvent de « hybride » ou de « télétravail », mais une phrase comme « possibilité de télétravail » ne dit pas si le poste est à distance. Elles ne sont pas utilisées : seuls le champ de la source, le lieu et le titre comptent (« Bilingual Specialist - 100% Remote »).
 
 Résultat : Télétravail 86, Hybride 57, Sur place 42, Sur la route 3, Non précisé 177. Ajouts : `normalisation.work_mode_of`, le filtre dans la page (avec les nombres), le graphique « Mode de travail » dans l'onglet Statistiques (un clic filtre) et la colonne `mode_de_travail` de l'export CSV. Vérifié dans Edge après une vraie collecte lancée par le serveur : 84 offres en télétravail, 57 en hybride une fois les annonces semblables regroupées. Les 5 nouveaux tests (`test_mode_travail.py`) vérifient aussi que « Remotely » ou « Remotivation » ne comptent pas comme télétravail.
+
+### Vérification des doublons entre sources (26 novembre)
+
+Essai sur la collecte du 25 novembre (366 annonces, 365 offres) : aucun employeur des pages carrières ni de Jobicy n'était aussi sur le Guichet-Emplois, et aucune offre commune entre Jobicy, Remotive et les pages carrières. Il n'y avait donc pas de doublon caché.
+
+Mais la règle de `fusion.py` n'aurait pas reconnu une offre de Levio publiée à la fois sur le Guichet-Emplois et sur sa page carrières :
+- le Guichet-Emplois met le titre CNP (« analyste en informatique ») dans le titre, et le titre de l'employeur à part ;
+- le lieu n'est pas écrit pareil (« Montréal (QC) » et « Montréal, Quebec, Canada »).
+
+Nouvelle règle : le titre de l'employeur si les deux annonces en ont un (sinon le titre CNP, comme avant), et la ville si les deux sont connues (sinon le lieu écrit). Sur les 366 annonces réelles : toujours 365 offres, et la seule fusion existante est gardée (une annonce directe du Guichet-Emplois et sa copie de Québec emploi). Les 4 nouveaux tests (`test_fusion_sources.py`) échouent avec l'ancien code, et l'un d'eux montre un défaut de l'ancienne règle : deux postes différents du même employeur, avec le même titre CNP, publiés par deux partenaires, étaient fusionnés à tort.
 
 ### Ce que les données montrent (17 novembre)
 
