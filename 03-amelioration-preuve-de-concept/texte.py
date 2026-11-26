@@ -75,3 +75,26 @@ def parse_display_date(value: str) -> str:
         return datetime(year, months[0], day).date().isoformat()
     except ValueError:
         return ""
+
+
+# Langue de l'annonce (essai du 26 novembre 2026 sur 365 offres) : on compte des petits mots
+# très courants de chaque langue. Vérifié avec les offres d'Osedea, qui indiquent (FR) ou (EN) :
+# 17 sur 18 correspondent, et la 18e est vraiment en anglais malgré son étiquette (FR).
+FRENCH_WORDS = frozenset("le la les des et est pour dans avec vous nous une du au sur vos notre nos aux ce cette qui que sont etre".split())
+ENGLISH_WORDS = frozenset("the and to of for with you our in is are will your we this that be as an on".split())
+MIN_LANGUAGE_WORDS = 15  # en dessous (titre seul, pas de description), on ne décide pas
+
+
+def announcement_language(text: str) -> str:
+    """« Français », « Anglais », « Français et anglais », ou « » s'il y a trop peu de texte."""
+    words = re.findall(r"[a-z]+", normalize(text))
+    french = sum(word in FRENCH_WORDS for word in words)
+    english = sum(word in ENGLISH_WORDS for word in words)
+    if french + english < MIN_LANGUAGE_WORDS:
+        return ""
+    share = french / (french + english)
+    if share >= 0.75:
+        return "Français"
+    if share <= 0.25:
+        return "Anglais"
+    return "Français et anglais"

@@ -316,6 +316,12 @@
       </select>
     </div>
     <div class="champ">
+      <label for="langue">Langue de l'annonce</label>
+      <select id="langue">
+        <option value="">Toutes les langues</option>
+      </select>
+    </div>
+    <div class="champ">
       <label for="mode">Mode de travail</label>
       <select id="mode">
         <option value="">Tous les modes</option>
@@ -454,7 +460,7 @@
   const formatDate = new Intl.DateTimeFormat("fr-CA", { day: "numeric", month: "long", year: "numeric" });
   const dateLisible = (iso) => { const d = new Date(iso + "T00:00:00"); return isNaN(d) ? iso : formatDate.format(d); };
   const $ = (id) => document.getElementById(id);
-  const champs = ["q", "region", "ville", "techno", "niveau", "salaire", "unite", "stages", "nouvelles", "avecSalaire", "actives", "avecDescription", "suivies", "mode", "tri"];
+  const champs = ["q", "region", "ville", "techno", "niveau", "salaire", "unite", "stages", "nouvelles", "avecSalaire", "actives", "avecDescription", "suivies", "mode", "langue", "tri"];
   let affichees = PAR_PAGE;
 
   // Comparaison sans accents ni majuscules : « montreal » trouve « Montréal ».
@@ -522,7 +528,7 @@
     const region = $("region").value, ville = $("ville").value, techno = $("techno").value, niveau = $("niveau").value;
     const salaire = parseFloat($("salaire").value), unite = $("unite").value;
     const stages = $("stages").checked, nouvelles = $("nouvelles").checked, avecSalaire = $("avecSalaire").checked, actives = $("actives").checked;
-    const avecDescription = $("avecDescription").checked, suivies = $("suivies").checked, modeChoisi = $("mode").value;
+    const avecDescription = $("avecDescription").checked, suivies = $("suivies").checked, modeChoisi = $("mode").value, langueChoisie = $("langue").value;
     return OFFRES.filter((o) => {
       if (region && o.region !== region) return false;
       if (ville && o.ville !== ville) return false;
@@ -534,6 +540,7 @@
       if (!isNaN(salaire) && (o.salMin === null || o.unite !== unite || o.salMin < salaire)) return false;
       if (avecDescription && !o.aDescription) return false;
       if (modeChoisi && (o.mode || "Non précisé") !== modeChoisi) return false;
+      if (langueChoisie && (o.langue || "Non précisé") !== langueChoisie) return false;
       if (suivies && !suivi.obtenir(o)) return false;
       if (actives) { const j = joursAvant(o.expire); if (j !== null && j < 0) return false; }
       if (mots.length) {
@@ -622,6 +629,8 @@
     art.append(meta);
 
     const badges = element("div", "badges");
+    if (o.langue === "Anglais") badges.append(element("span", "badge", "Annonce en anglais"));
+    else if (o.langue === "Français et anglais") badges.append(element("span", "badge", "Annonce bilingue"));
     if (o.republiee) badges.append(element("span", "badge", "Republiée"));
     else if (o.nouvelle) badges.append(element("span", "badge nouvelle", "Nouvelle"));
     if (autres.length) badges.append(element("span", "badge", `${autres.length + 1} annonces`));
@@ -1078,7 +1087,7 @@
   function exporterCsv() {
     const colonnes = [["titre", (o) => o.titre], ["profession_cnp", (o) => o.titreCnp], ["employeur", (o) => o.employeur],
       ["ville", (o) => o.ville], ["region", (o) => o.region], ["salaire_min", (o) => o.salMin], ["salaire_max", (o) => o.salMax],
-      ["unite", (o) => o.unite], ["niveau", (o) => o.niveau], ["mode_de_travail", (o) => o.mode], ["stage", (o) => o.stage], ["technologies", (o) => o.technos.join(", ")],
+      ["unite", (o) => o.unite], ["niveau", (o) => o.niveau], ["mode_de_travail", (o) => o.mode], ["langue_annonce", (o) => o.langue], ["stage", (o) => o.stage], ["technologies", (o) => o.technos.join(", ")],
       ["description_complete", (o) => (o.aDescription ? "oui" : "non")], ["score_dec", (o) => o.scoreDec], ["publiee_le", (o) => o.publiee], ["expire_le", (o) => o.expire], ["lien", (o) => o.lien], ["lien_origine", (o) => o.lienOrigine]];
     if (comparaison) {
       colonnes.splice(1, 0,
@@ -1241,6 +1250,9 @@
   const ORDRE_MODES = ["Télétravail", "Hybride", "Sur place", "Sur la route"];
   remplirListe($("mode"), compter(OFFRES.map((o) => o.mode || "Non précisé"))
     .sort((a, b) => (ORDRE_MODES.indexOf(a[0]) + 1 || 99) - (ORDRE_MODES.indexOf(b[0]) + 1 || 99)), true);
+  const ORDRE_LANGUES = ["Français", "Anglais", "Français et anglais"];
+  remplirListe($("langue"), compter(OFFRES.map((o) => o.langue || "Non précisé"))
+    .sort((a, b) => (ORDRE_LANGUES.indexOf(a[0]) + 1 || 99) - (ORDRE_LANGUES.indexOf(b[0]) + 1 || 99)), true);
   // La case « Nouvelles offres seulement » n'apparaît que s'il y a des nouveautés depuis la collecte précédente.
   $("case-nouvelles").hidden = !OFFRES.some((o) => o.nouvelle && !o.republiee);
   lireAdresse();

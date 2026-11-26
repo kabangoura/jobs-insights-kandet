@@ -22,7 +22,7 @@ python main.py --depuis offres.json --cv cv-exemple.txt    # classement des offr
 **Le plus simple : double-cliquez sur `Demarrer.cmd`.** La page s'ouvre dans le navigateur avec un bouton **« Mettre à jour les offres »** (pour arrêter, fermez la fenêtre « Offres TI - serveur »). Dans le terminal, c'est `python serveur.py`, puis `http://127.0.0.1:8000`.
 
 Ouvrez ensuite **`offres.html`** d'un double-clic. Elle est recréée à chaque lancement de `main.py` : après une nouvelle collecte, rafraîchissez-la (F5). Dans la page, vous pouvez :
-- filtrer par région, ville, technologie, niveau, mode de travail (télétravail, hybride, sur place), salaire ou stage ;
+- filtrer par région, ville, technologie, niveau, mode de travail (télétravail, hybride, sur place), langue de l'annonce, salaire ou stage ;
 - comparer les offres avec votre CV ;
 - vérifier votre lettre pour une offre ;
 - voir des statistiques (salaires, régions, technologies…) dans l'onglet « Statistiques » ;

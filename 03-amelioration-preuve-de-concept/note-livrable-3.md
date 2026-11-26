@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 271 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 275 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -64,7 +64,7 @@ python main.py --depuis offres.json    # recrée seulement la page, sans nouvell
 
 Dans la page :
 
-- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées, description complète seulement, mes offres suivies seulement, **mode de travail** (Télétravail, Hybride, Sur place, Sur la route, Non précisé). Les offres en télétravail ouvertes à tout le Canada n'ont pas de région : pour les voir toutes, garder « Toutes les régions ».
+- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées, description complète seulement, mes offres suivies seulement, **mode de travail** (Télétravail, Hybride, Sur place, Sur la route, Non précisé), **langue de l'annonce** (Français, Anglais, Français et anglais, Non précisé), avec un badge « Annonce en anglais » sur la carte. Les offres en télétravail ouvertes à tout le Canada n'ont pas de région : pour les voir toutes, garder « Toutes les régions ».
 - **Tri** : plus récentes, salaire le plus élevé, expire bientôt, titre.
 - **Technologies demandées** : un clic sur une technologie filtre les offres.
 - **Chaque offre** affiche le titre de l'employeur, le salaire, le niveau, les badges (« Stage », « Expire dans 3 j »…), un résumé, les technologies et « Plus de détails » (études, expérience, langues). Elle donne aussi le lien vers l'offre et vers l'annonce d'origine.
@@ -352,7 +352,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (271 tests)
+# Tests hors ligne (275 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -379,7 +379,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 271 |
+| Tests hors ligne | 33 | 275 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -704,6 +704,17 @@ Mais la règle de `fusion.py` n'aurait pas reconnu une offre de Levio publiée �
 - le lieu n'est pas écrit pareil (« Montréal (QC) » et « Montréal, Quebec, Canada »).
 
 Nouvelle règle : le titre de l'employeur si les deux annonces en ont un (sinon le titre CNP, comme avant), et la ville si les deux sont connues (sinon le lieu écrit). Sur les 366 annonces réelles : toujours 365 offres, et la seule fusion existante est gardée (une annonce directe du Guichet-Emplois et sa copie de Québec emploi). Les 4 nouveaux tests (`test_fusion_sources.py`) échouent avec l'ancien code, et l'un d'eux montre un défaut de l'ancienne règle : deux postes différents du même employeur, avec le même titre CNP, publiés par deux partenaires, étaient fusionnés à tort.
+
+### Vérification de la langue de l'annonce (26 novembre)
+
+Avec Jobicy et les pages carrières, beaucoup d'annonces sont en anglais. La langue est mesurée dans le titre et la description, en comptant de petits mots très courants (« le, la, et, pour, avec, vous… » et « the, and, to, with, you… »). Avec moins de 15 de ces mots, on ne décide pas.
+
+Essai sur les 365 offres :
+- vérité terrain : Osedea indique (FR) ou (EN) dans le lieu de ses offres. 17 sur 18 correspondent ; la 18e (« Senior Software Developer », étiquetée FR) est entièrement en anglais (0 mot français, 116 anglais) ;
+- les intitulés en français des fiches du Guichet-Emplois ne faussent pas le résultat : les annonces en anglais qui ont une description sont bien en anglais ;
+- résultat : 172 en français, 129 en anglais, 2 bilingues, 62 non précisées (surtout des annonces sans description).
+
+C'est la langue **de l'annonce**, pas les langues demandées pour le poste (celles-ci restent dans « Plus de détails »). Ajouts : `texte.announcement_language`, le filtre, le badge et la colonne `langue_annonce` de l'export CSV. Vérifié dans Edge : 164 offres en français, 128 en anglais, 59 non précisées une fois les annonces semblables regroupées ; 4 nouveaux tests (`test_langue.py`).
 
 ### Ce que les données montrent (17 novembre)
 

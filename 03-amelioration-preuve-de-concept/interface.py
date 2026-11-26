@@ -15,7 +15,7 @@ from modele import AggregatedOffer
 from normalisation import work_mode_of
 from score_dec import dec_score, load_program
 from semblables import republished, similar_groups
-from texte import french_date
+from texte import announcement_language, french_date
 
 
 STAGE_LABELS = {"confirmed_stage": "Stage", "possible_stage": "Stage possible"}
@@ -98,7 +98,8 @@ def offer_to_row(offer: AggregatedOffer, number: int) -> dict[str, object]:
         "expire": offer.expires_at,
         "resume": offer.summary,
         "etudes": offer.education,
-        "langues": offer.languages,
+        "langues": offer.languages,  # langues demandées pour le poste
+        "langue": announcement_language(f"{offer.original_title or offer.title} {offer.description}"),  # langue de l'annonce
         "sites": [record.origin_site or record.source for record in offer.source_records],
         "lien": first.url if first else "",
         "source": first.source if first else "",
