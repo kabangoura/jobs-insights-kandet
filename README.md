@@ -19,6 +19,8 @@ python main.py                                             # collecte + page off
 python main.py --depuis offres.json --cv cv-exemple.txt    # classement des offres pour un CV fictif
 ```
 
+Pour avoir un bouton **« Mettre à jour les offres »** dans la page : `python serveur.py`, puis ouvrez `http://127.0.0.1:8000`.
+
 Ouvrez ensuite **`offres.html`** d'un double-clic. Elle est recréée à chaque lancement de `main.py` : après une nouvelle collecte, rafraîchissez-la (F5). Dans la page, vous pouvez :
 - filtrer par région, ville, technologie, niveau, salaire ou stage ;
 - comparer les offres avec votre CV ;

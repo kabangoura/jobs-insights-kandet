@@ -63,6 +63,9 @@
   header h1 { margin: 0; font-size: 22px; }
   header p { margin: 4px 0 0; color: var(--doux); }
   header p.creation { font-size: 13px; }
+  .maj { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+  .maj span { font-size: 13.5px; color: var(--doux); overflow-wrap: anywhere; }
+  .maj button:disabled { opacity: .7; cursor: progress; }
   .page {
     display: grid;
     grid-template-columns: 290px 1fr;
@@ -276,6 +279,11 @@
   <h1>Offres d'emploi et de stage en informatique au Québec</h1>
   <p>{{NOMBRE}} · collecte du {{DATE}}{{NOUVEAUTES}} · Guichet-Emplois (et ses sites partenaires) et Remotive</p>
   <p class="creation">{{CREATION}} · relancez <code>python main.py</code> pour une nouvelle collecte, puis rafraîchissez cette page (F5)</p>
+  <div class="maj" id="maj" hidden>
+    <button type="button" id="maj-bouton" class="principal">Mettre à jour les offres</button>
+    <span id="maj-etat" aria-live="polite">Lance une nouvelle collecte (quelques minutes), puis recharge la page.</span>
+  </div>
+  <p class="creation" id="maj-aide" hidden>Pour avoir le bouton « Mettre à jour les offres » : lancez <code>python serveur.py</code>, puis ouvrez <code>http://127.0.0.1:8000</code>.</p>
 </header>
 
 <div class="page">
@@ -1241,6 +1249,51 @@
     setTimeout(() => { $("copier").textContent = "Copier le lien de cette recherche"; }, 2000);
   });
   window.addEventListener("hashchange", () => { lireAdresse(); mettreAJour(true); });
+  // ---- Bouton « Mettre à jour » : seulement quand la page vient de serveur.py (http://127.0.0.1) ----
+  // Ouverte d'un double-clic (file://), la page ne peut pas lancer Python : elle explique quoi faire.
+  async function etatCollecte() {
+    const reponse = await fetch("/api/etat", { cache: "no-store" });
+    if (!reponse.ok) throw new Error(String(reponse.status));
+    return reponse.json();
+  }
+
+  function suivreCollecte() {
+    const bouton = $("maj-bouton"), texte = $("maj-etat");
+    bouton.disabled = true;
+    bouton.textContent = "Mise à jour en cours…";
+    const tour = async () => {
+      let e;
+      try { e = await etatCollecte(); } catch { texte.textContent = "Le serveur ne répond plus. Relancez python serveur.py."; return; }
+      if (e.enCours) {
+        texte.textContent = e.lignes.length ? e.lignes[e.lignes.length - 1] : "Démarrage de la collecte…";
+        setTimeout(tour, 2000);
+      } else if (e.code === 0) {
+        texte.textContent = "Collecte terminée. Rechargement de la page…";
+        setTimeout(() => location.reload(), 800);
+      } else {
+        bouton.disabled = false;
+        bouton.textContent = "Mettre à jour les offres";
+        texte.textContent = `La collecte a échoué (code ${e.code}). ${e.lignes.slice(-2).join(" ")}`;
+      }
+    };
+    tour();
+  }
+
+  (async () => {
+    if (!location.protocol.startsWith("http")) { $("maj-aide").hidden = false; return; }
+    let e;
+    try { e = await etatCollecte(); } catch { return; }
+    $("maj").hidden = false;
+    $("maj-bouton").addEventListener("click", async () => {
+      try {
+        const r = await fetch("/api/mise-a-jour", { method: "POST", headers: { "X-Jobs-Insights": "1" } });
+        if (r.ok || r.status === 409) suivreCollecte();
+        else $("maj-etat").textContent = `Refusé par le serveur (${r.status}).`;
+      } catch { $("maj-etat").textContent = "Le serveur ne répond pas. Relancez python serveur.py."; }
+    });
+    if (e.enCours) suivreCollecte();
+  })();
+
   mettreAJour(true);
 })();
 </script>

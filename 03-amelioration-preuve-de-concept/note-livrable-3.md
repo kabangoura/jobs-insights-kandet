@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 249 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 255 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -87,6 +87,16 @@ Dans la page :
   - la page affiche les vérifications (✓ / ✗ : zones à remplir, employeur, poste, technologies, longueur) et les suggestions. Ce sont les mêmes que `main.py --lettre` ;
   - si un CV est chargé dans la page, les suggestions séparent les technologies du CV de celles à apprendre ;
   - la lettre reste dans la fenêtre : on peut la retoucher, revérifier, ou la vérifier pour une autre offre.
+
+### 4 bis. Mettre à jour les offres depuis la page (bouton « Mettre à jour les offres »)
+
+```powershell
+python serveur.py          # puis ouvrir http://127.0.0.1:8000 (Ctrl+C pour arrêter)
+```
+
+La page s'ouvre alors avec un bouton **« Mettre à jour les offres »**. Un clic lance `python main.py --nouveautes` : nouvelle collecte, page recréée et résumé des nouveautés. La progression s'affiche à côté du bouton (« Recherche 3 sur 14… »), puis la page se recharge toute seule. Ouverte d'un double-clic, la page ne peut pas lancer Python (le navigateur l'interdit) : elle indique alors de lancer `python serveur.py`.
+
+Le serveur écoute seulement sur cet ordinateur (`127.0.0.1`), sert seulement la page, et n'accepte le lancement que depuis la page elle-même : un autre site ouvert dans le navigateur ne peut pas lancer de collecte. Une seule collecte à la fois.
 
 ### 5. Comparer son CV avec les offres (aide à la candidature)
 
@@ -339,7 +349,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (249 tests)
+# Tests hors ligne (255 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -366,7 +376,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 249 |
+| Tests hors ligne | 33 | 255 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -635,6 +645,17 @@ Essai d'abord sur la collecte du 24 novembre : 14 nouvelles offres depuis le 23 
 Résultat avec le CV fictif : le stage de Revenu Québec en premier (score DEC 70), puis « analyste commercial en informatique » chez IMDS Software (note 61, en commun : Python, C#, HTML/CSS, SQL), puis les autres.
 
 `rapport-nouveautes.md` peut contenir des informations tirées du CV : il est ignoré par Git (`rapport-*.md`). Les 9 nouveaux tests (`test_nouveautes.py`) vérifient les republications et les annonces semblables, le stage sans technologie en premier, la partie CV, le cas sans collecte précédente, la liste coupée, et deux collectes simulées de suite avec `--nouveautes`.
+
+### Vérification du bouton « Mettre à jour » (25 novembre)
+
+Idée vue au cours du 25 novembre : lancer la collecte depuis la page plutôt que depuis le terminal. Le dossier du professeur dans le dépôt commun n'avait pas encore cette version : `serveur.py` est fait à partir de l'idée, avec la bibliothèque standard (`http.server`, `subprocess`).
+
+Vérifications :
+- dans Edge, avec une fausse collecte : le clic fait passer le bouton à « Mise à jour en cours… » et la progression s'affiche (« Recherche 3 sur 14 : analystes ») ;
+- une vraie collecte lancée par le serveur, comme le bouton : 146 s, sans erreur, 184 offres, page recréée avec « page créée le 25 novembre 2026 à 19 h 26 » ;
+- ouverte d'un double-clic, la page affiche l'aide au lieu du bouton ;
+- les 6 tests de `test_serveur.py` démarrent le vrai serveur avec une fausse collecte : page servie, une seule collecte à la fois, lancement refusé sans l'en-tête de la page, autre nom d'hôte refusé (« DNS rebinding »), aucun autre fichier servi (ni CV, ni `offres.json`, ni cache), écoute sur `127.0.0.1` seulement ;
+- le test qui vérifie que la page n'envoie rien a été rendu plus précis : les seules requêtes vont à `/api/etat` et `/api/mise-a-jour`, sans données. Le CV, la lettre et le suivi restent dans le navigateur.
 
 ### Ce que les données montrent (17 novembre)
 

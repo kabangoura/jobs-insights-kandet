@@ -408,6 +408,10 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - essai d'abord : avec le CV seulement, le seul nouveau stage (sans technologie) n'apparaissait pas ;
   - ajout : `nouveautes.py`, option `--nouveautes` (stages, puis offres proches du CV, puis score DEC), `rapport-nouveautes.md`, ajouté au script `collecte-reguliere.ps1` ;
   - 9 nouveaux tests dans `test_nouveautes.py` ; au total, 249 tests OK.
+- **Bouton « Mettre à jour » ✅ (25 novembre)** :
+  - idée vue au cours : lancer la collecte depuis la page ;
+  - ajout : `serveur.py` (bibliothèque standard, `127.0.0.1` seulement, protégé contre les autres sites), bouton et progression dans `offres.html` ;
+  - essai dans Edge et vraie collecte par le serveur (146 s, 184 offres) ; 6 nouveaux tests dans `test_serveur.py` ; au total, 255 tests OK.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.
 - **Remotive** : l'API publique ne donne que 14 offres, presque toutes hors Québec (télétravail Canada ou international). Elle reste une source d'appoint. Pour avoir plus d'offres québécoises hors Guichet-Emplois, Jobboom est la meilleure piste : JSON-LD sur chaque fiche, déjà testé par Elvira, Mamadou et Gregory.

@@ -5,6 +5,7 @@ localStorage du navigateur. Si Node.js n'est pas installé, ces tests sont saut�
 """
 
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -119,10 +120,13 @@ class PageTests(unittest.TestCase):
         self.assertNotIn("{{", page)
 
     def test_nothing_is_sent(self) -> None:
-        # Le suivi n'utilise que le stockage du navigateur : aucune requête réseau dans la page.
+        # Le suivi, le CV et la lettre restent dans le navigateur. Les seules requêtes de la page
+        # vont au serveur local (serveur.py, bouton « Mettre à jour ») et n'envoient aucune donnée.
         template = TEMPLATE_FILE.read_text(encoding="utf-8") + SUIVI_SCRIPT_FILE.read_text(encoding="utf-8")
-        for forbidden in ("fetch(", "XMLHttpRequest", "sendBeacon", "WebSocket"):
+        for forbidden in ("XMLHttpRequest", "sendBeacon", "WebSocket", "body:"):
             self.assertNotIn(forbidden, template)
+        calls = re.findall(r"fetch\(([^,)]*)", template)
+        self.assertEqual(sorted(set(calls)), ['"/api/etat"', '"/api/mise-a-jour"'])
 
 
 if __name__ == "__main__":
