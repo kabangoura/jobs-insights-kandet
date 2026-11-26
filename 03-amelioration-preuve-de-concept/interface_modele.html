@@ -583,7 +583,9 @@
       ? `${nombre.format(o.salMin)} $ à ${nombre.format(o.salMax)} $`
       : `${nombre.format(o.salMin)} $`;
     const unite = o.unite ? ` par ${o.unite}` : "";
-    return montant + unite;
+    // Devise écrite seulement si ce ne sont pas des dollars canadiens (ex. USD chez Quora).
+    const devise = o.devise && o.devise !== "CAD" ? ` (${o.devise})` : "";
+    return montant + devise + unite;
   }
 
   function element(balise, classe, texte) {

@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 275 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 279 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -352,7 +352,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (275 tests)
+# Tests hors ligne (279 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -379,7 +379,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 275 |
+| Tests hors ligne | 33 | 279 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -715,6 +715,17 @@ Essai sur les 365 offres :
 - résultat : 172 en français, 129 en anglais, 2 bilingues, 62 non précisées (surtout des annonces sans description).
 
 C'est la langue **de l'annonce**, pas les langues demandées pour le poste (celles-ci restent dans « Plus de détails »). Ajouts : `texte.announcement_language`, le filtre, le badge et la colonne `langue_annonce` de l'export CSV. Vérifié dans Edge : 164 offres en français, 128 en anglais, 59 non précisées une fois les annonces semblables regroupées ; 4 nouveaux tests (`test_langue.py`).
+
+### Vérification des salaires des autres sources (26 novembre)
+
+Aucune offre de Jobicy ni des pages carrières n'avait de salaire (les champs de salaire de Jobicy étaient vides). Mais plusieurs employeurs écrivent une fourchette dans la description, toujours après un mot clé : « Estimated salary range » (Levio), « Base salary » (Workleap), « Salaire de base » (ShareGate), « Échelle salariale » (Spiria), « total target cash compensation » (PolicyMe).
+
+Règles, pour ne rien deviner :
+- un mot comme « salary », « salaire », « rémunération » ou « compensation » au plus 150 caractères avant la fourchette (un montant de levée de fonds n'est pas pris) ;
+- deux montants d'au moins 20 000 $ : c'est un salaire annuel ;
+- la devise est gardée seulement si elle est écrite (CAD ou USD). « $90,000 to $130,000 » chez Levio reste sans devise : l'offre affiche le salaire, mais il n'entre pas dans les médianes en CAD de l'onglet Statistiques.
+
+Résultat de la vraie collecte : 34 offres de plus avec un salaire (Greenhouse 29, Lever 3, Jobicy 2), dont 13 en CAD écrit (Tailscale, PolicyMe) et 1 en USD (Quora, affiché « (USD) »). Les 4 nouveaux tests (`test_salaire_texte.py`) reprennent les formats réels et vérifient qu'un montant sans mot « salaire » ou trop petit n'est pas pris.
 
 ### Ce que les données montrent (17 novembre)
 

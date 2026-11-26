@@ -86,12 +86,39 @@ def place(location: str) -> tuple[str, str]:
     return first, "QC"
 
 
+# Fourchette de salaire écrite dans la description (essai du 26 novembre 2026 : 20 offres sur 181,
+# toujours après « Estimated salary range », « Base salary », « Salaire de base », « Échelle salariale »...).
+_AMOUNT = r"(?:(?:CA|US|C)?\$\s?\d{2,3}(?:[  ,.]\d{3})+|\d{2,3}(?:[  ,.]\d{3})+\s?\$)"
+SALARY_RANGE = re.compile(_AMOUNT + r"\s*(?:CAD|USD)?\s*(?:-|–|—|to|à|and|et)\s*" + _AMOUNT + r"\s*(?:CAD|USD)?", re.IGNORECASE)
+SALARY_WORDS = re.compile(r"salary|salaire|salariale|remuneration|compensation|pay range|base pay|traitement", re.IGNORECASE)
+MIN_ANNUAL = 20_000  # deux montants d'au moins 20 000 $ : un salaire annuel (pas un taux horaire)
+
+
+def salary_from_text(description: str) -> tuple[str, str]:
+    """(texte du salaire avec son unité, devise) ou (« », « »). La devise n'est gardée que si elle est écrite."""
+    from normalisation import parse_salary_text
+
+    for match in SALARY_RANGE.finditer(description):
+        before = normalize(description[max(0, match.start() - 150):match.start()])
+        if not SALARY_WORDS.search(before):
+            continue  # un montant sans mot « salaire » juste avant : peut-être autre chose
+        text = " ".join(match.group(0).split())
+        low, high, _ = parse_salary_text(text)
+        if low is None or high is None or min(low, high) < MIN_ANNUAL:
+            continue
+        currency = "USD" if "usd" in text.lower() or "us$" in text.lower() else "CAD" if "cad" in text.lower() or "ca$" in text.lower() else ""
+        return f"{text} par année", currency
+    return "", ""
+
+
 def _record(source: str, origin: str, source_id: str, url: str, title: str, employer: str, location: str,
             published: str, description: str, job_type: str = "", category: str = "", remote: bool = False,
             raw: dict | None = None, mode: str = "") -> SourceRecord:
     stage_status, stage_signals = classify_stage(title, job_type, description)
     city, province = place(location)
+    salary, currency = salary_from_text(description)
     return SourceRecord(
+        salary=salary, salary_currency=currency,
         source=source, source_id=source_id, url=url, title=title, origin_site=origin, employer=employer,
         location=location, published_at=published, work_mode=mode or ("Télétravail" if remote else ""),
         job_type=job_type, category=category, description=description, city=city, province=province,
