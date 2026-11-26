@@ -123,6 +123,7 @@ class RegularCollectionTests(unittest.TestCase):
                 original_title=f"Poste {url.rstrip('/').rsplit('/', 1)[-1]}").encode("utf-8")),
             patch("fiches.time.sleep"),
             patch("main.load_remotive_payload", return_value={"jobs": []}),
+            patch("main.collect_other_sources", return_value=([], [], {})),  # hors ligne : pas de Jobicy ni de pages carrières
             contextlib.redirect_stdout(output),
             contextlib.redirect_stderr(io.StringIO()),
         ):

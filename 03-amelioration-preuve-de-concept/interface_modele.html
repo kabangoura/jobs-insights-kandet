@@ -277,7 +277,7 @@
 <body>
 <header>
   <h1>Offres d'emploi et de stage en informatique au Québec</h1>
-  <p>{{NOMBRE}} · collecte du {{DATE}}{{NOUVEAUTES}} · Guichet-Emplois (et ses sites partenaires) et Remotive</p>
+  <p>{{NOMBRE}} · collecte du {{DATE}}{{NOUVEAUTES}} · Guichet-Emplois (et ses sites partenaires), Remotive, Jobicy et pages carrières d'employeurs · surtout au Québec, avec quelques offres ailleurs au Canada ou en télétravail</p>
   <p class="creation">{{CREATION}} · relancez <code>python main.py</code> pour une nouvelle collecte, puis rafraîchissez cette page (F5)</p>
   <div class="maj" id="maj" hidden>
     <button type="button" id="maj-bouton" class="principal">Mettre à jour les offres</button>
@@ -421,7 +421,9 @@
 
 <footer>
   Sources : <a href="https://www.guichetemplois.gc.ca/">Guichet-Emplois</a> (offres directes et partenaires : Jobillico, Québec emploi, Talent.com…),
-  <a href="https://remotive.com/">Remotive</a> (offres affichées avec leur lien d'origine; ne pas les republier ailleurs).
+  <a href="https://remotive.com/">Remotive</a> (offres affichées avec leur lien d'origine; ne pas les republier ailleurs),
+  <a href="https://jobicy.com/">Jobicy</a> (offres d'emploi à distance, chaque offre renvoie à Jobicy)
+  et les pages carrières publiques d'employeurs (Greenhouse, Lever).
   Régions : Répertoire des municipalités du Québec, MAMH (CC-BY 4.0).
   Les informations absentes d'une offre ne sont pas devinées. Vérifiez toujours l'offre sur le site d'origine avant de postuler.
 </footer>
@@ -698,7 +700,11 @@
     art.append(zoneSuivi(o));
 
     const liens = element("div", "liens");
-    const principal = lienSur(o.lien, o.sites[0] === "Remotive" ? "Voir l'offre sur Remotive" : "Voir l'offre sur le Guichet-Emplois");
+    // Le lien principal nomme toujours la source (Jobicy demande d'être cité avec un lien vers son offre).
+    const textePrincipal = o.source === "Guichet-Emplois" ? "Voir l'offre sur le Guichet-Emplois"
+      : ["Greenhouse", "Lever"].includes(o.source) ? `Voir l'offre sur la page carrières de ${o.employeur}`
+      : `Voir l'offre sur ${o.source || o.sites[0]}`;
+    const principal = lienSur(o.lien, textePrincipal);
     if (principal) liens.append(principal);
     const origine = lienSur(o.lienOrigine, o.aDescription ? `Annonce d'origine (${o.sites[0]})` : `Lire l'offre complète sur ${o.sites[0]}`);
     if (origine && !o.aDescription) origine.classList.add("important");

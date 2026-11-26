@@ -144,6 +144,7 @@ class CollecteSimulee:
             patch("fiches.fetch_url", return_value=make_posting().encode("utf-8")),
             patch("fiches.time.sleep"),
             patch("main.load_remotive_payload", return_value=REMOTIVE_PAYLOAD),
+            patch("main.collect_other_sources", return_value=([], [], {})),  # hors ligne : pas de Jobicy ni de pages carrières
             contextlib.redirect_stdout(io.StringIO()),
             contextlib.redirect_stderr(io.StringIO()),
         ):
@@ -156,6 +157,7 @@ class CollecteSimulee:
             patch("guichet.fetch_url", side_effect=AssertionError("aucun appel réseau attendu")),
             patch("fiches.fetch_url", side_effect=AssertionError("aucun appel réseau attendu")),
             patch("main.load_remotive_payload", side_effect=AssertionError("aucun appel réseau attendu")),
+            patch("main.collect_other_sources", side_effect=AssertionError("aucun appel réseau attendu")),
             contextlib.redirect_stdout(output),
             contextlib.redirect_stderr(io.StringIO()),
         ):

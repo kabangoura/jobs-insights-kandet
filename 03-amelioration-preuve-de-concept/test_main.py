@@ -22,6 +22,7 @@ class MainTests(unittest.TestCase):
             patch("fiches.fetch_url", return_value=make_posting().encode("utf-8")) as postings,
             patch("fiches.time.sleep"),
             patch("main.load_remotive_payload", return_value=REMOTIVE_PAYLOAD) as remotive,
+            patch("main.collect_other_sources", return_value=([], [], {})),  # hors ligne : pas de Jobicy ni de pages carrières
             contextlib.redirect_stdout(output),
             contextlib.redirect_stderr(io.StringIO()),
         ):

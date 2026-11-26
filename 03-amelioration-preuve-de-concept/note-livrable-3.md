@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 255 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 261 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -198,6 +198,7 @@ python main.py --depuis offres.json --techno SQL --ville Montréal --csv
 | `--html` | Met dans `offres.html` seulement les offres affichées par les filtres (sans cette option, la page contient toutes les offres) |
 | `--sans-html` | Ne pas recréer `offres.html` |
 | `--resume-seulement` | Affiche les statistiques sans la liste |
+| `--sans-autres-sources` | Ne pas interroger Jobicy ni les pages carrières d'employeurs (`pages_carrieres.json`) |
 | `--donnees-ouvertes` | Lit les données ouvertes du Guichet-Emplois pour la tendance des 12 derniers mois dans l'onglet Statistiques (`--donnees-ouvertes 24` pour 24 mois). La première fois, environ 12 fichiers de 60 Mo sont lus en continu, sans être enregistrés (quelques minutes). Ensuite, seuls les nouveaux mois sont lus |
 | `--nouveautes` | Résumé des nouvelles offres depuis la collecte précédente (stages, offres proches du CV avec `--cv`, puis les autres par score DEC), enregistré dans `rapport-nouveautes.md` |
 | `--score-dec` | Classe les offres affichées selon le score « étudiant du DEC », avec l'explication de chaque score (`--nb-offres` pour en voir plus que 10) |
@@ -349,7 +350,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (255 tests)
+# Tests hors ligne (261 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -376,7 +377,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 255 |
+| Tests hors ligne | 33 | 261 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -657,6 +658,31 @@ Vérifications :
 - les 6 tests de `test_serveur.py` démarrent le vrai serveur avec une fausse collecte : page servie, une seule collecte à la fois, lancement refusé sans l'en-tête de la page, autre nom d'hôte refusé (« DNS rebinding »), aucun autre fichier servi (ni CV, ni `offres.json`, ni cache), écoute sur `127.0.0.1` seulement ;
 - le test qui vérifie que la page n'envoie rien a été rendu plus précis : les seules requêtes vont à `/api/etat` et `/api/mise-a-jour`, sans données. Le CV, la lettre et le suivi restent dans le navigateur.
 
+### Revue des autres sources (25 novembre)
+
+Après le cours du 25 novembre, j'ai repris tous les sites utilisés dans les dossiers des autres étudiants du dépôt commun, puis d'autres sites canadiens. Pour chacun : `robots.txt`, conditions d'utilisation, puis un appel pour voir ce qu'il apporte vraiment.
+
+| Site | Constat | Décision |
+|---|---|---|
+| [Jobicy](https://jobicy.com/jobs-rss-feed) (API d'emplois à distance) | « You may use Jobicy listings in your own products [...] without requesting individual permission ». Citer Jobicy avec un lien, au plus 1 requête par seconde, un passage par heure. 51 offres TI ouvertes au Canada | **Ajouté** |
+| Pages carrières [Lever](https://github.com/lever/postings-api) | « These jobs may be scraped by third parties. » | **Ajouté** (Osedea, Spiria, Mirego) |
+| Pages carrières [Greenhouse](https://docs.greenhouse.io/job-board.html) | API publique sans clé, aucune interdiction, `robots.txt` permis | **Ajouté** (Levio, AlayaCare, AppDirect, Workleap, Vooban, ShareGate, Poka, Novatize, Tailscale) |
+| Jobillico | Conditions : robots interdits, pas de republication sans autorisation | Écarté (ses offres arrivent déjà par le Guichet-Emplois) |
+| Talent.com | Conditions : « scraping » interdit ; `robots.txt` bloque la recherche | Écarté (idem) |
+| Jobboom | Conditions : pas de copie ni de republication (vérifié le 20 novembre) | Écarté |
+| Himalayas | Affichage permis sur son propre site, mais pas de transmission à d'autres sites d'emploi ; offres surtout mondiales | Pas ajouté pour l'instant |
+| RemoteOK | Lien obligatoire, rien sur la republication, 5 offres au Canada sur 100 | Pas ajouté |
+| [Adzuna](https://developer.adzuna.com/docs/terms_of_service) | Permis pour la recherche d'emploi personnelle, avec le logo « Adzuna ». Rayan a obtenu 40 offres à Montréal par recherche. Il faut une clé (compte gratuit) | Possible plus tard, avec une clé gardée hors du dépôt |
+| Welcome to the Jungle | Offres surtout en Europe (essai de Ferdinand) | Pas ajouté |
+| Indeed, Monster, Workopolis, CareerBeacon | 403 ou robots refusés | Écartés (aucun contournement) |
+| SmartRecruiters | `robots.txt` interdit l'API | Écarté |
+
+Les pages carrières ont été trouvées en essayant environ 80 employeurs québécois du numérique sur Greenhouse et Lever : 12 répondent avec des offres au Québec ou au Canada. La liste est dans `pages_carrieres.json`, facile à compléter.
+
+Essai avant l'ajout : le filtre des titres écartait à tort « Développeur.euse Java » et « Conseiller.ère en architecture infonuagique » (il cherchait des mots entiers). Corrigé : il reconnaît maintenant le début des mots, et il écarte toujours les postes de ventes, de marketing, de juristes et de comptables.
+
+Résultat de la vraie collecte du 25 novembre : **365 offres au lieu de 184** (Guichet-Emplois 178, Remotive 7, Jobicy 51, pages carrières 130). Les liens nomment toujours la source (« Voir l'offre sur Jobicy », « Voir l'offre sur la page carrières de Levio »). Chaque réponse est gardée une heure dans le cache, et une source en erreur n'arrête pas les autres. Les 6 nouveaux tests (`test_autres_sources.py`) utilisent de faux contenus au format réel ; les collectes simulées des autres tests remplacent ces sources par un faux, pour rester hors ligne.
+
 ### Ce que les données montrent (17 novembre)
 
 - **Salaire médian** (valeur basse de la fourchette) : 70 000 $ par année (111 offres), 36 $ de l'heure (68 offres).
@@ -684,6 +710,8 @@ Vérifications :
 - **Dépendance au site :** si le Guichet-Emplois change ses classes CSS ou ses balises RDFa, il faudra adapter `guichet.py` et `fiches.py`. Les tests utilisent une copie du balisage de novembre 2026.
 
 - **Régions :** la région est trouvée à partir du nom de la ville. Un lieu qui n'est pas une municipalité ni un arrondissement (hameau, quartier, « Différentes régions ») reste sans région. Un nom porté par des municipalités de deux régions différentes reste aussi sans région, sans qu'on en choisisse une.
+
+- **Autres sources :** Jobicy et quelques pages carrières (Tailscale, Levio à Toronto) donnent aussi des offres ailleurs au Canada ou en télétravail : elles n'ont pas de région québécoise. « Québec » seul dans un lieu peut être la ville ou la province : la ville reste alors vide. Un lieu comme « Montréal ou Québec » est gardé tel quel, sans région.
 
 - **Données ouvertes :** elles donnent une tendance mois par mois, pas des offres. Elles ne suivent pas les filtres de la page. Le Guichet-Emplois publie chaque mois avec quelques semaines de retard (octobre 2026 était le dernier mois le 24 novembre). Un mois sans fichier français est absent du graphique, et la page le dit.
 

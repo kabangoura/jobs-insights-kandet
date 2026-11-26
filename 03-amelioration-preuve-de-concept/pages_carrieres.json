@@ -1,0 +1,17 @@
+{
+  "note": "Pages carrières d'employeurs (API publiques Greenhouse et Lever), trouvées le 25 novembre 2026 en essayant des employeurs québécois du numérique. Seules les offres situées au Québec ou au Canada sont gardées. Pour ajouter un employeur : son jeton est la fin de l'adresse de sa page carrières (boards.greenhouse.io/JETON ou jobs.lever.co/JETON).",
+  "employeurs": [
+    {"plateforme": "greenhouse", "jeton": "levio", "employeur": "Levio"},
+    {"plateforme": "greenhouse", "jeton": "alayacare", "employeur": "AlayaCare"},
+    {"plateforme": "greenhouse", "jeton": "appdirect", "employeur": "AppDirect"},
+    {"plateforme": "greenhouse", "jeton": "workleap", "employeur": "Workleap"},
+    {"plateforme": "greenhouse", "jeton": "vooban", "employeur": "Vooban"},
+    {"plateforme": "greenhouse", "jeton": "sharegate", "employeur": "ShareGate"},
+    {"plateforme": "greenhouse", "jeton": "poka", "employeur": "Poka"},
+    {"plateforme": "greenhouse", "jeton": "novatize", "employeur": "Novatize"},
+    {"plateforme": "greenhouse", "jeton": "tailscale", "employeur": "Tailscale"},
+    {"plateforme": "lever", "jeton": "osedea", "employeur": "Osedea"},
+    {"plateforme": "lever", "jeton": "spiria", "employeur": "Spiria"},
+    {"plateforme": "lever", "jeton": "mirego", "employeur": "Mirego"}
+  ]
+}

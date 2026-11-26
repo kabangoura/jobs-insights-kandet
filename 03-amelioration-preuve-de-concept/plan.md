@@ -412,6 +412,11 @@ Ce sont des pistes 3 et 4 du projet (présenter les offres, aider à la candidat
   - idée vue au cours : lancer la collecte depuis la page ;
   - ajout : `serveur.py` (bibliothèque standard, `127.0.0.1` seulement, protégé contre les autres sites), bouton et progression dans `offres.html` ;
   - essai dans Edge et vraie collecte par le serveur (146 s, 184 offres) ; 6 nouveaux tests dans `test_serveur.py` ; au total, 255 tests OK.
+- **Autres sources ✅ (25 novembre)** :
+  - revue de tous les sites des autres étudiants et d'autres sites canadiens (`robots.txt`, conditions, un appel d'essai) ;
+  - ajout : `autres_sources.py` (Jobicy, pages carrières Greenhouse et Lever de 12 employeurs dans `pages_carrieres.json`), cache d'une heure ;
+  - vraie collecte : 365 offres au lieu de 184 ; 6 nouveaux tests ; au total, 261 tests OK ;
+  - écartés : Jobillico, Talent.com, Jobboom (conditions), Indeed, Monster, Workopolis, CareerBeacon, SmartRecruiters ; Adzuna possible avec une clé.
 - **Descriptions de Québec emploi ❌ (vérifié le 17 novembre)** : techniquement possible (JSON-LD `JobPosting`, `robots.txt` permissif), mais interdit par les conditions d'utilisation du site. Non ajouté.
 - **Géolocalisation** : à partir du code postal, seulement avec une source de données autorisée.
 - **Remotive** : l'API publique ne donne que 14 offres, presque toutes hors Québec (télétravail Canada ou international). Elle reste une source d'appoint. Pour avoir plus d'offres québécoises hors Guichet-Emplois, Jobboom est la meilleure piste : JSON-LD sur chaque fiche, déjà testé par Elvira, Mamadou et Gregory.

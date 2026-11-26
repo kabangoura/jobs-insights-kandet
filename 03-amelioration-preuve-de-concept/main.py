@@ -32,6 +32,7 @@ from interface import open_data_for_page, write_html
 from lettre import build_letter_report, check_letter, find_offer, letter_tips
 from texte import french_date
 from guichet import CNP_CODES_TI, GUICHET_DELAY_SECONDS, GUICHET_SEARCH_URL, fetch_guichet
+from autres_sources import collect_other_sources
 from donnees_ouvertes import DEFAULT_MONTHS, load_summary as load_open_data, update as update_open_data
 from historique import Changes, append_history, clean_cache, compare_with_previous, load_previous, read_history
 from nouveautes import build_summary as build_news_summary
@@ -83,6 +84,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Ignorer le cache Remotive (l'API demande au plus 4 appels par jour).",
     )
     collecte.add_argument("--sans-remotive", action="store_true", help="Ne pas interroger Remotive.")
+    collecte.add_argument("--sans-autres-sources", action="store_true",
+                          help="Ne pas interroger Jobicy ni les pages carrières d'employeurs (pages_carrieres.json).")
     collecte.add_argument(
         "--sans-fiches",
         action="store_true",
@@ -301,6 +304,14 @@ def collect(args: argparse.Namespace) -> tuple[list[AggregatedOffer], dict[str, 
         except (OSError, ValueError) as error:
             errors.append(f"Remotive : {error}")
 
+    other_counts: dict[str, int] = {}
+    if not args.sans_autres_sources:
+        # Jobicy et pages carrières (Greenhouse, Lever) : autres_sources.py, cache d'une heure.
+        records, other_errors, other_counts = collect_other_sources(
+            args.cache_fiches.parent / "autres-sources", log=lambda text: print(text, file=sys.stderr))
+        source_records.extend(records)
+        errors.extend(other_errors)
+
     for error in errors:
         print(f"AVERTISSEMENT : {error}", file=sys.stderr)
     if not source_records and errors:
@@ -321,6 +332,9 @@ def collect(args: argparse.Namespace) -> tuple[list[AggregatedOffer], dict[str, 
     if remotive_total is not None:
         kept = sum(offer.source_records[0].source == "Remotive" for offer in offers)
         print(f"Remotive : {kept} gardées sur {remotive_total} dans l'API")
+    if other_counts:
+        print(f"Autres sources : {sum(other_counts.values())} offres TI lues "
+              f"({', '.join(f'{name} {count}' for name, count in other_counts.items() if count)})")
     if postings is not None:
         print(
             f"Fiches lues : {postings['read']} ({postings['from_cache']} du cache, "

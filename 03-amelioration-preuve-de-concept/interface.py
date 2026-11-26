@@ -99,6 +99,7 @@ def offer_to_row(offer: AggregatedOffer, number: int) -> dict[str, object]:
         "langues": offer.languages,
         "sites": [record.origin_site or record.source for record in offer.source_records],
         "lien": first.url if first else "",
+        "source": first.source if first else "",
         "lienOrigine": offer.original_url,
     }
 
