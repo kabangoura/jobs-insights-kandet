@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 from modele import AggregatedOffer
-from normalisation import work_mode_of
+from normalisation import annual_equivalent, work_mode_of
 from score_dec import dec_score, load_program
 from semblables import republished, similar_groups
 from texte import announcement_language, french_date
@@ -86,6 +86,7 @@ def offer_to_row(offer: AggregatedOffer, number: int) -> dict[str, object]:
         "unite": offer.salary_unit,
         "devise": offer.salary_currency,
         "negocier": offer.salary_negotiable,
+        "equiv": _equivalent(offer),
         "niveau": offer.level,
         "experience": offer.experience,
         "technos": offer.technologies,
@@ -105,6 +106,14 @@ def offer_to_row(offer: AggregatedOffer, number: int) -> dict[str, object]:
         "source": first.source if first else "",
         "lienOrigine": offer.original_url,
     }
+
+
+def _equivalent(offer: AggregatedOffer) -> dict[str, object] | None:
+    """Salaire annuel équivalent (normalisation.annual_equivalent) : heures de la fiche du Guichet-Emplois."""
+    hours = next((str((r.source_data.get("posting") or {}).get("work_hours") or "")
+                  for r in offer.source_records if (r.source_data.get("posting") or {}).get("work_hours")), "")
+    found = annual_equivalent(offer.salary_min, offer.salary_max, offer.salary_unit, hours)
+    return None if found is None else {"min": found[0], "max": found[1], "calcul": found[2]}
 
 
 def _json_for_html(rows: object) -> str:

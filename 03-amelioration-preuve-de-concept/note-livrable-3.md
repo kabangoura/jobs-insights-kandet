@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 279 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 284 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -352,7 +352,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (279 tests)
+# Tests hors ligne (284 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -379,7 +379,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 279 |
+| Tests hors ligne | 33 | 284 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -727,6 +727,12 @@ Règles, pour ne rien deviner :
 
 Résultat de la vraie collecte : 34 offres de plus avec un salaire (Greenhouse 29, Lever 3, Jobicy 2), dont 13 en CAD écrit (Tailscale, PolicyMe) et 1 en USD (Quora, affiché « (USD) »). Les 4 nouveaux tests (`test_salaire_texte.py`) reprennent les formats réels et vérifient qu'un montant sans mot « salaire » ou trop petit n'est pas pris.
 
+### Vérification du salaire annuel équivalent (26 novembre)
+
+Pour comparer un taux horaire avec un salaire annuel, il faut le nombre d'heures par semaine. Essai : seulement 3 offres horaires sur 71 l'écrivent dans leur description. Mais la fiche du Guichet-Emplois le donne dans une balise à côté du salaire (« 26,58 $ de l'heure / 35 », balise `workHours`) : 101 fiches sur 221 l'ont, et `fiches.py` ne la lisait pas.
+
+Ajouts : lecture de `workHours` dans `fiches.py`, `normalisation.annual_equivalent` (heures écrites × 52 semaines, ou mois × 12 ; jamais de valeur supposée), la ligne « ≈ 48 376 $ par année (35 h/sem. × 52 sem.) » sous le salaire, le tri « Salaire le plus élevé » et le filtre « Salaire minimum par année » qui en tiennent compte, et deux colonnes dans l'export CSV. Résultat de la vraie collecte : 51 taux horaires sur 71 et les 6 salaires mensuels ont un équivalent. Les 5 nouveaux tests (`test_salaire_equivalent.py`) reprennent le balisage réel de la fiche de Revenu Québec.
+
 ### Ce que les données montrent (17 novembre)
 
 - **Salaire médian** (valeur basse de la fourchette) : 70 000 $ par année (111 offres), 36 $ de l'heure (68 offres).
@@ -747,7 +753,7 @@ Résultat de la vraie collecte : 34 offres de plus avec un salaire (Greenhouse 2
 - **Stages :** un seul confirmé sur 194 offres. Il y a très peu de stages TI sur le Guichet-Emplois en ce moment, et `fsrc=16` n'est pas un filtre de stages.
 - **Caractères des partenaires :** des `?` remplacent les apostrophes dans leurs textes (« d?ordinateur »). Ils sont laissés tels quels, car un `?` peut être une vraie question.
 - **Salaires :**
-  - pas de conversion entre heure, jour, mois et année ;
+  - équivalent annuel seulement quand il se calcule sans supposition : taux horaire avec les heures écrites dans la fiche (51 offres sur 71), ou salaire mensuel × 12. Les taux au jour et les taux horaires sans heures écrites n'en ont pas. Les médianes de l'onglet Statistiques ne mélangent toujours pas les unités ;
   - pour Remotive, la devise n'est pas écrite. 2 montants sans unité (`$170k - $200k`) sont gardés dans l'offre, mais ne sont pas comptés dans le tableau des salaires.
 - **Niveau :** c'est une règle simple. « Architecte » dans un titre CNP donne « avancé ». 70 offres n'ont aucun indice de niveau.
 - **Cache :** il ne se périme pas. Pour relire une fiche, il faut supprimer son fichier dans `cache/fiches/`.

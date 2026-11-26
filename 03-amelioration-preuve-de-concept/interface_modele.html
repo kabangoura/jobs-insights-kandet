@@ -160,6 +160,7 @@
   .badge.bientot { background: var(--orange-fond); color: var(--orange); }
   .badge.urgent { background: var(--rouge-fond); color: var(--rouge); font-weight: 600; }
   .salaire { margin-top: 8px; font-weight: 600; }
+  .salaire .equivalent { font-weight: 400; font-size: 13.5px; color: var(--doux); margin-top: 2px; }
   .salaire small { font-weight: 400; color: var(--doux); }
   .resume { margin: 8px 0 0; color: var(--texte); }
   .technos { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
@@ -537,7 +538,10 @@
       if (stages && !o.stage) return false;
       if (nouvelles && (!o.nouvelle || o.republiee)) return false;
       if (avecSalaire && o.salMin === null) return false;
-      if (!isNaN(salaire) && (o.salMin === null || o.unite !== unite || o.salMin < salaire)) return false;
+      if (!isNaN(salaire)) {
+        const bas = unite === "année" ? salaireAnnuelMin(o) : o.unite === unite ? o.salMin : null;
+        if (bas === null || bas < salaire) return false;
+      }
       if (avecDescription && !o.aDescription) return false;
       if (modeChoisi && (o.mode || "Non précisé") !== modeChoisi) return false;
       if (langueChoisie && (o.langue || "Non précisé") !== langueChoisie) return false;
@@ -551,7 +555,9 @@
     });
   }
 
-  function salaireAnnuel(o) { return o.unite === "année" && o.salMin !== null ? (o.salMax ?? o.salMin) : -1; }
+  // Salaire annuel, ou son équivalent quand il se calcule sans supposition (heures écrites, ou × 12 mois).
+  function salaireAnnuel(o) { return o.unite === "année" && o.salMin !== null ? (o.salMax ?? o.salMin) : o.equiv ? o.equiv.max : -1; }
+  function salaireAnnuelMin(o) { return o.unite === "année" && o.salMin !== null ? o.salMin : o.equiv ? o.equiv.min : null; }
 
   // Résultats de la comparaison avec un CV (id de l'offre -> note, en commun, manque). Gardés en mémoire seulement.
   let comparaison = null;
@@ -675,6 +681,11 @@
     if (salaire) {
       const s = element("div", "salaire", salaire);
       if (o.negocier) s.append(element("small", "", " · à négocier"));
+      if (o.equiv) {
+        const e = o.equiv;
+        const montant = e.min === e.max ? `${nombre.format(e.min)} $` : `${nombre.format(e.min)} $ à ${nombre.format(e.max)} $`;
+        s.append(element("div", "equivalent", `≈ ${montant} par année (${e.calcul})`));
+      }
       art.append(s);
     }
     if (o.resume) art.append(element("p", "resume", o.resume));
@@ -1089,6 +1100,7 @@
   function exporterCsv() {
     const colonnes = [["titre", (o) => o.titre], ["profession_cnp", (o) => o.titreCnp], ["employeur", (o) => o.employeur],
       ["ville", (o) => o.ville], ["region", (o) => o.region], ["salaire_min", (o) => o.salMin], ["salaire_max", (o) => o.salMax],
+      ["equivalent_annuel_min", (o) => o.equiv?.min ?? ""], ["equivalent_annuel_max", (o) => o.equiv?.max ?? ""],
       ["unite", (o) => o.unite], ["niveau", (o) => o.niveau], ["mode_de_travail", (o) => o.mode], ["langue_annonce", (o) => o.langue], ["stage", (o) => o.stage], ["technologies", (o) => o.technos.join(", ")],
       ["description_complete", (o) => (o.aDescription ? "oui" : "non")], ["score_dec", (o) => o.scoreDec], ["publiee_le", (o) => o.publiee], ["expire_le", (o) => o.expire], ["lien", (o) => o.lien], ["lien_origine", (o) => o.lienOrigine]];
     if (comparaison) {

@@ -153,3 +153,35 @@ def normalize_record(record: SourceRecord) -> None:
         value = getattr(record, name)
         match = re.match(r"\d{4}-\d{2}-\d{2}", value)
         setattr(record, name, match.group(0) if match else "")
+
+
+def weekly_hours(text: str) -> tuple[float, float] | None:
+    """« 35 » donne (35, 35) ; « 35 à 40 » donne (35, 40). Rien d'écrit : None."""
+    numbers = [float(n.replace(",", ".")) for n in re.findall(r"\d+(?:[.,]\d+)?", text or "")]
+    numbers = [n for n in numbers if 1 <= n <= 80]
+    if not numbers:
+        return None
+    return min(numbers), max(numbers)
+
+
+def annual_equivalent(salary_min: float | None, salary_max: float | None, unit: str,
+                      hours_text: str = "") -> tuple[float, float, str] | None:
+    """Salaire annuel équivalent, seulement quand le calcul ne suppose rien :
+    - par heure : avec les heures par semaine écrites dans la fiche (× 52 semaines) ;
+    - par mois : × 12.
+    Par jour ou sans heures écrites : None (on ne connaît pas le temps travaillé).
+    """
+    if salary_min is None:
+        return None
+    high = salary_max if salary_max is not None else salary_min
+    if unit == "mois":
+        return round(salary_min * 12), round(high * 12), "12 mois"
+    if unit == "heure":
+        hours = weekly_hours(hours_text)
+        if hours is None:
+            return None
+        low_h, high_h = hours
+        french = lambda value: f"{value:g}".replace(".", ",")  # 37,5 et non 37.5
+        written = french(low_h) if low_h == high_h else f"{french(low_h)} à {french(high_h)}"
+        return round(salary_min * low_h * 52), round(high * high_h * 52), f"{written} h/sem. × 52 sem."
+    return None

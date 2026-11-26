@@ -54,6 +54,7 @@ class JobPostingDetails:
     salary_min: str = ""
     salary_max: str = ""
     salary_unit: str = ""
+    work_hours: str = ""  # heures par semaine (« 35 », « 37,5 ») : balise workHours, à côté du salaire
     education: str = ""
     experience: str = ""
     conditions: str = ""
@@ -178,6 +179,7 @@ def parse_job_posting(html: str) -> JobPostingDetails:
         salary_min=clean(parser.contents.get("minValue") or parser.value("minValue")),
         salary_max=clean(parser.contents.get("maxValue") or parser.value("maxValue")),
         salary_unit=parser.value("unitText"),
+        work_hours=parser.value("workHours"),
         education=parser.value("educationRequirements"),
         experience=parser.value("experienceRequirements"),
         conditions=parser.value("specialCommitments"),
@@ -205,6 +207,7 @@ def apply_details(record: SourceRecord, details: JobPostingDetails) -> None:
         "salary_min": details.salary_min,
         "salary_max": details.salary_max,
         "salary_unit": details.salary_unit,
+        "work_hours": details.work_hours,
     }
 
 
