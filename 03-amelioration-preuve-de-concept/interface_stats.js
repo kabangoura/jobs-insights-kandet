@@ -40,6 +40,9 @@ function calculerStatistiques(offres) {
     // Ordre fixe : du débutant à l'avancé, puis les offres sans indice de niveau.
     niveaux: [...NIVEAUX, "Non précisé"].map((n) => [n, offres.filter((o) => (o.niveau || "Non précisé") === n).length]),
     salaireParNiveau: parNiveau,
+    // Ordre fixe ; « Non précisé » à la fin (le mode n'est jamais deviné).
+    modes: [...["Télétravail", "Hybride", "Sur place", "Sur la route"].map((m) => [m, offres.filter((o) => o.mode === m).length]),
+      ["Non précisé", offres.filter((o) => !o.mode).length]].filter(([, n]) => n),
     professions: compterValeurs(offres.map((o) => o.titreTri).filter((t) => t)),
   };
 }

@@ -88,12 +88,12 @@ def place(location: str) -> tuple[str, str]:
 
 def _record(source: str, origin: str, source_id: str, url: str, title: str, employer: str, location: str,
             published: str, description: str, job_type: str = "", category: str = "", remote: bool = False,
-            raw: dict | None = None) -> SourceRecord:
+            raw: dict | None = None, mode: str = "") -> SourceRecord:
     stage_status, stage_signals = classify_stage(title, job_type, description)
     city, province = place(location)
     return SourceRecord(
         source=source, source_id=source_id, url=url, title=title, origin_site=origin, employer=employer,
-        location=location, published_at=published, work_mode="Télétravail" if remote else "",
+        location=location, published_at=published, work_mode=mode or ("Télétravail" if remote else ""),
         job_type=job_type, category=category, description=description, city=city, province=province,
         stage_status=stage_status, stage_signals=stage_signals, source_data=raw or {},
     )
@@ -152,7 +152,8 @@ def parse_lever(payload: list, employer: str) -> list[SourceRecord]:
             "Lever", employer, str(job.get("id")), str(job.get("hostedUrl") or ""), title, employer, location,
             published, " ".join(part for part in parts if part).strip(), str(categories.get("commitment") or ""),
             str(categories.get("team") or ""),
-            remote=str(job.get("workplaceType") or "") == "remote" or "remote" in normalize(location),
+            remote="remote" in normalize(location),
+            mode={"remote": "Télétravail", "hybrid": "Hybride", "onsite": "Sur place"}.get(str(job.get("workplaceType") or ""), ""),
         ))
     return records
 

@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 261 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 266 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -64,7 +64,7 @@ python main.py --depuis offres.json    # recrée seulement la page, sans nouvell
 
 Dans la page :
 
-- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées, description complète seulement, mes offres suivies seulement.
+- **Recherche par mots** (titre, employeur, technologie, ville…) et **filtres** : région, ville, technologie, niveau, salaire minimum, stages seulement, salaire indiqué, offres expirées cachées, description complète seulement, mes offres suivies seulement, **mode de travail** (Télétravail, Hybride, Sur place, Sur la route, Non précisé). Les offres en télétravail ouvertes à tout le Canada n'ont pas de région : pour les voir toutes, garder « Toutes les régions ».
 - **Tri** : plus récentes, salaire le plus élevé, expire bientôt, titre.
 - **Technologies demandées** : un clic sur une technologie filtre les offres.
 - **Chaque offre** affiche le titre de l'employeur, le salaire, le niveau, les badges (« Stage », « Expire dans 3 j »…), un résumé, les technologies et « Plus de détails » (études, expérience, langues). Elle donne aussi le lien vers l'offre et vers l'annonce d'origine.
@@ -350,7 +350,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (261 tests)
+# Tests hors ligne (266 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -377,7 +377,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 261 |
+| Tests hors ligne | 33 | 266 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
@@ -682,6 +682,16 @@ Les pages carrières ont été trouvées en essayant environ 80 employeurs québ
 Essai avant l'ajout : le filtre des titres écartait à tort « Développeur.euse Java » et « Conseiller.ère en architecture infonuagique » (il cherchait des mots entiers). Corrigé : il reconnaît maintenant le début des mots, et il écarte toujours les postes de ventes, de marketing, de juristes et de comptables.
 
 Résultat de la vraie collecte du 25 novembre : **365 offres au lieu de 184** (Guichet-Emplois 178, Remotive 7, Jobicy 51, pages carrières 130). Les liens nomment toujours la source (« Voir l'offre sur Jobicy », « Voir l'offre sur la page carrières de Levio »). Chaque réponse est gardée une heure dans le cache, et une source en erreur n'arrête pas les autres. Les 6 nouveaux tests (`test_autres_sources.py`) utilisent de faux contenus au format réel ; les collectes simulées des autres tests remplacent ces sources par un faux, pour rester hors ligne.
+
+### Vérification du filtre « Mode de travail » (25 novembre)
+
+Essai d'abord sur les 365 offres :
+- le mode était écrit pour 158 offres : Guichet-Emplois (Sur place 42, Hybride 30, À distance 3, Sur la route 3), Jobicy et Remotive (toutes en télétravail), quelques pages carrières (« Remote (Canada) ») ;
+- « Télétravail » et « À distance » veulent dire la même chose : ils sont regroupés sous « Télétravail » ;
+- Lever donne un champ précis pour chaque offre (`workplaceType` : hybrid, remote, onsite). Seul « remote » était utilisé : les 36 autres offres Lever ont maintenant leur mode ;
+- les descriptions parlent souvent de « hybride » ou de « télétravail », mais une phrase comme « possibilité de télétravail » ne dit pas si le poste est à distance. Elles ne sont pas utilisées : seuls le champ de la source, le lieu et le titre comptent (« Bilingual Specialist - 100% Remote »).
+
+Résultat : Télétravail 86, Hybride 57, Sur place 42, Sur la route 3, Non précisé 177. Ajouts : `normalisation.work_mode_of`, le filtre dans la page (avec les nombres), le graphique « Mode de travail » dans l'onglet Statistiques (un clic filtre) et la colonne `mode_de_travail` de l'export CSV. Vérifié dans Edge après une vraie collecte lancée par le serveur : 84 offres en télétravail, 57 en hybride une fois les annonces semblables regroupées. Les 5 nouveaux tests (`test_mode_travail.py`) vérifient aussi que « Remotely » ou « Remotivation » ne comptent pas comme télétravail.
 
 ### Ce que les données montrent (17 novembre)
 

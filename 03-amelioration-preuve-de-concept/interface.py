@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from modele import AggregatedOffer
+from normalisation import work_mode_of
 from score_dec import dec_score, load_program
 from semblables import republished, similar_groups
 from texte import french_date
@@ -91,7 +92,8 @@ def offer_to_row(offer: AggregatedOffer, number: int) -> dict[str, object]:
         "competences": offer.skills,
         "stage": STAGE_LABELS.get(offer.stage_status, ""),
         "type": JOB_TYPE_LABELS.get(offer.job_type, offer.job_type),
-        "mode": offer.work_mode,
+        # Aussi pour un offres.json plus ancien : « À distance » devient « Télétravail », etc.
+        "mode": work_mode_of(offer.work_mode, offer.location, offer.original_title or offer.title),
         "publiee": offer.published_at,
         "expire": offer.expires_at,
         "resume": offer.summary,

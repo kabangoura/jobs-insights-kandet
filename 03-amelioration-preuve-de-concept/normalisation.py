@@ -96,8 +96,39 @@ def salary_unit_from_text(text: str) -> str:
     return ""
 
 
+# Mode de travail (essai du 26 novembre 2026, 365 offres) : seulement ce que la source écrit.
+# « À distance » (Guichet-Emplois) et « remote » veulent dire « Télétravail ». Les descriptions
+# ne sont pas lues : « possibilité de télétravail » ne dit pas si le poste est à distance.
+WORK_MODES = {"teletravail": "Télétravail", "a distance": "Télétravail", "remote": "Télétravail",
+              "hybride": "Hybride", "hybrid": "Hybride", "sur place": "Sur place", "onsite": "Sur place",
+              "on-site": "Sur place", "sur la route": "Sur la route"}
+REMOTE_WORDS = re.compile(r"\b(?:remote|teletravail|a distance|work from home)\b")
+HYBRID_WORDS = re.compile(r"\b(?:hybrid|hybride)\b")
+
+
+def work_mode_of(mode: str, location: str = "", title: str = "") -> str:
+    """Télétravail, Hybride, Sur place, Sur la route, ou « » si rien n'est écrit clairement.
+
+    D'abord le champ de la source ; sinon le lieu ou le titre, quand l'employeur y écrit
+    « Remote », « Télétravail » ou « Hybride » (ex. « Developer - 100% Remote »).
+    """
+    known = WORK_MODES.get(normalize(mode).strip())
+    if known:
+        return known
+    if mode:
+        return mode
+    for text in (location, title):
+        text = normalize(text)
+        if HYBRID_WORDS.search(text):
+            return "Hybride"
+        if REMOTE_WORDS.search(text):
+            return "Télétravail"
+    return ""
+
+
 def normalize_record(record: SourceRecord) -> None:
-    """Remplit ville, province, salaire en chiffres et dates au format AAAA-MM-JJ."""
+    """Remplit ville, province, mode de travail, salaire en chiffres et dates au format AAAA-MM-JJ."""
+    record.work_mode = work_mode_of(record.work_mode, record.location, record.original_title or record.title)
     if not record.city or not record.province:
         city, province = split_location(record.location)
         record.city = record.city or city
