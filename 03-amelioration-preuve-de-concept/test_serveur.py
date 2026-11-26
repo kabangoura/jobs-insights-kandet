@@ -80,5 +80,19 @@ class ServeurTests(unittest.TestCase):
         self.assertEqual(self.serveur.server_address[0], "127.0.0.1")
 
 
+class LanceurTests(unittest.TestCase):
+    def test_demarrer_cmd(self) -> None:
+        # Double-clic sur Demarrer.cmd (racine du dépôt) : lance serveur.py et ouvre la page.
+        lanceur = Path(__file__).resolve().parents[1] / "Demarrer.cmd"
+        contenu = lanceur.read_bytes()
+        lignes = contenu.split(bytes([10]))  # 10 = fin de ligne ; 13 = retour chariot (Windows)
+        # Fins de ligne Windows partout : sinon cmd lit mal les étiquettes des « goto ».
+        self.assertTrue(all(ligne.endswith(bytes([13])) for ligne in lignes[:-1]))
+        texte = contenu.decode("utf-8")
+        self.assertIn("03-amelioration-preuve-de-concept", texte)
+        self.assertIn("python serveur.py", texte)
+        self.assertIn("http://127.0.0.1:8000", texte)
+
+
 if __name__ == "__main__":
     unittest.main()

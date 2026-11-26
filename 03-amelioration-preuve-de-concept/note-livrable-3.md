@@ -28,7 +28,7 @@ Toutes les commandes suivantes se lancent depuis ce dossier.
 python -m unittest discover -p "test_*.py" -v
 ```
 
-La dernière ligne doit être `OK`, après `Ran 270 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
+La dernière ligne doit être `OK`, après `Ran 271 tests`. Dix tests exécutent les scripts de la page avec Node.js : le CV, la lettre et les statistiques (comparés avec Python), et le suivi des candidatures. Si Node.js n'est pas installé, ces tests sont simplement sautés (`skipped`).
 
 ### 3. Lancer la collecte
 
@@ -90,8 +90,10 @@ Dans la page :
 
 ### 4 bis. Mettre à jour les offres depuis la page (bouton « Mettre à jour les offres »)
 
+Le plus simple : **double-cliquer sur `Demarrer.cmd`** à la racine du dépôt. Il lance le serveur dans une fenêtre réduite « Offres TI - serveur » (la fermer arrête le serveur), attend qu'il réponde, puis ouvre la page. Si le serveur tourne déjà, il ouvre seulement la page. Sans Python, il explique où le télécharger.
+
 ```powershell
-python serveur.py          # puis ouvrir http://127.0.0.1:8000 (Ctrl+C pour arrêter)
+python serveur.py          # la même chose dans le terminal, puis ouvrir http://127.0.0.1:8000 (Ctrl+C pour arrêter)
 ```
 
 La page s'ouvre alors avec un bouton **« Mettre à jour les offres »**. Un clic lance `python main.py --nouveautes` : nouvelle collecte, page recréée et résumé des nouveautés. La progression s'affiche à côté du bouton (« Recherche 3 sur 14… »), puis la page se recharge toute seule. Ouverte d'un double-clic, la page ne peut pas lancer Python (le navigateur l'interdit) : elle indique alors de lancer `python serveur.py`.
@@ -350,7 +352,7 @@ python .\03-amelioration-preuve-de-concept\main.py --depuis .\03-amelioration-pr
 # Collecte régulière : comparaison avec la collecte précédente, page à jour, ménage du cache
 python .\03-amelioration-preuve-de-concept\main.py --nettoyer-cache --html --resume-seulement
 
-# Tests hors ligne (270 tests)
+# Tests hors ligne (271 tests)
 python -m unittest discover -s 03-amelioration-preuve-de-concept -p "test_*.py" -v
 ```
 
@@ -377,7 +379,7 @@ Sorties :
 | Technologies détectées | 0 | 83 offres |
 | Niveau (débutant, intermédiaire, avancé) | 0 | 124 offres |
 | Stages détectés | 0 | 1 confirmé |
-| Tests hors ligne | 33 | 270 |
+| Tests hors ligne | 33 | 271 |
 
 Les compteurs de la dernière colonne viennent du résumé de `offres.json` (`summary.filled_fields`).
 
